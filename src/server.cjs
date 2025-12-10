@@ -24,7 +24,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Google Sheets Web App URL
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbz5G5PwPJIw-hRqaMeKKT0nzp_L1K0gAWsWJaaBAZoRG2f2T7_-NlMs71U3PD8yMAxj/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxNVnbDryws5ZwOJFqw9EUhk2YNOiXKBsLPB1v0lfvD26Il2iLzNCTwrRs-Y9VkYHf6/exec';
 
 // Define DATA_FILE for fallback storage
 const DATA_FILE = path.join(__dirname, 'registrations.json');
