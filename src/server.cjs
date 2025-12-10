@@ -1,239 +1,183 @@
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configure CORS for your frontend domains
-const corsOptions = {
-  origin: [
-    'http://localhost:3000',  // React dev server
-    'http://localhost:5173',  // Vite dev server
-    'https://winter-projects.vercel.app',  // Your Vercel frontend
-    // Add other production URLs as needed
-  ],
+// Allow all frontend origins (simpler)
+app.use(cors({
+  origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
+  credentials: true
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json());
 
-// Google Sheets Web App URL
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxNVnbDryws5ZwOJFqw9EUhk2YNOiXKBsLPB1v0lfvD26Il2iLzNCTwrRs-Y9VkYHf6/exec';
-
-// Define DATA_FILE for fallback storage
+// Your data file on Render server
 const DATA_FILE = path.join(__dirname, 'registrations.json');
+console.log('📁 Data file location:', DATA_FILE);
 
-// Initialize data file if it doesn't exist
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
+// ========== HELPER FUNCTIONS ==========
+function initializeDataFile() {
+  if (!fs.existsSync(DATA_FILE)) {
+    console.log('📄 Creating new data file...');
+    fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
+  }
 }
 
-// Helper function to read data
-const readDataFile = () => {
+function readAllRegistrations() {
   try {
+    if (!fs.existsSync(DATA_FILE)) {
+      return [];
+    }
     const content = fs.readFileSync(DATA_FILE, 'utf8').trim();
     return content ? JSON.parse(content) : [];
   } catch (error) {
-    console.error('Error reading data file:', error);
+    console.error('❌ Error reading file:', error);
     return [];
   }
-};
+}
 
-// Helper function to write data
-const writeDataFile = (data) => {
+function saveRegistration(newData) {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    const allData = readAllRegistrations();
+    allData.push(newData);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(allData, null, 2));
+    console.log('✅ Saved registration #', allData.length);
     return true;
   } catch (error) {
-    console.error('Error writing data file:', error);
+    console.error('❌ Error saving:', error);
     return false;
   }
-};
+}
 
-// Custom axios instance with redirect handling
-const axiosWithRedirects = axios.create({
-  maxRedirects: 5,
-  timeout: 30000,
-  headers: {
-    'User-Agent': 'WinterProjects-Backend/1.0'
-  },
-  // Handle redirects properly
-  maxContentLength: Infinity,
-  maxBodyLength: Infinity
-});
+// Initialize on startup
+initializeDataFile();
 
-// Main registration endpoint - FIXED VERSION
-app.post('/api/register', async (req, res) => {
+// ========== API ENDPOINTS ==========
+
+// 🎯 1. MAIN REGISTRATION ENDPOINT
+app.post('/api/register', (req, res) => {
   try {
     const { identifier, phone, projectId } = req.body;
     
-    console.log('📝 Registration attempt:', { identifier, phone, projectId });
+    console.log('📝 New registration:', { identifier, phone, projectId });
     
-    // Basic validation
+    // Validation
     if (!identifier || !phone) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Missing required fields' 
+        message: 'Email/Roll number and phone are required' 
       });
     }
     
-    // Prepare data for Google Sheets
-    const sheetData = {
+    // Create registration object
+    const registration = {
       id: Date.now(),
-      identifier: identifier.toLowerCase(),
-      phone,
-      projectId: projectId || 'none',
+      identifier: identifier.toLowerCase().trim(),
+      phone: phone.trim(),
+      projectId: projectId || null,
       timestamp: new Date().toISOString(),
-      ip: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
+      ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
       userAgent: req.headers['user-agent'] || 'unknown'
     };
     
-    console.log('📤 Sending to Google Sheets:', sheetData);
+    // Save to file
+    const saved = saveRegistration(registration);
     
-    try {
-      // FIX: Send to Google Sheets with proper redirect handling
-      const response = await axiosWithRedirects.post(GOOGLE_SHEET_URL, sheetData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('✅ Google Sheets response status:', response.status);
-      console.log('✅ Google Sheets response data:', response.data);
-      
-      // Also save locally as backup
-      const localData = readDataFile();
-      localData.push({
-        ...sheetData,
-        savedToGoogle: true,
-        googleResponse: response.data,
-        googleStatus: response.status
-      });
-      writeDataFile(localData);
-      
-      res.json({ 
-        success: true, 
-        message: 'Registration successful',
-        data: sheetData,
-        googleSheetsStatus: 'sent'
-      });
-      
-    } catch (googleError) {
-      console.error('❌ Google Sheets error:', googleError.message);
-      console.error('❌ Error details:', {
-        code: googleError.code,
-        status: googleError.response?.status,
-        data: googleError.response?.data,
-        headers: googleError.response?.headers
-      });
-      
-      // Save locally as fallback
-      const localData = readDataFile();
-      localData.push({
-        ...sheetData,
-        savedToGoogle: false,
-        googleError: googleError.message,
-        backup: true
-      });
-      writeDataFile(localData);
-      
-      res.json({ 
-        success: true, 
-        message: 'Registration saved locally',
-        data: sheetData,
-        warning: 'Google Sheets may not have received data',
-        errorDetails: googleError.message
+    if (!saved) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to save registration' 
       });
     }
     
-  } catch (error) {
-    console.error('💥 General registration error:', error);
-    
-    // Last resort: try to save something
-    try {
-      const { identifier = 'unknown', phone = 'unknown', projectId = 'none' } = req.body || {};
-      const localData = readDataFile();
-      localData.push({
-        id: Date.now(),
-        identifier: identifier.toLowerCase(),
-        phone,
-        projectId,
-        timestamp: new Date().toISOString(),
-        ip: req.ip || 'unknown',
-        userAgent: req.headers['user-agent'] || 'unknown',
-        error: error.message,
-        emergencyBackup: true
-      });
-      writeDataFile(localData);
-    } catch (fsError) {
-      console.error('💀 Failed to save even locally:', fsError);
-    }
-    
-    res.status(500).json({ 
-      success: false, 
-      message: 'Internal server error',
-      error: error.message 
-    });
-  }
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    service: 'Winter Projects Registration API',
-    environment: process.env.NODE_ENV || 'development',
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    googleSheetsUrl: GOOGLE_SHEET_URL
-  });
-});
-
-// View all registrations
-app.get('/api/registrations', (req, res) => {
-  try {
-    const data = readDataFile();
+    // Success response
     res.json({ 
       success: true, 
-      count: data.length, 
-      data 
+      message: 'Registration successful!',
+      data: registration,
+      registrationId: registration.id
     });
+    
   } catch (error) {
+    console.error('💥 Registration error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Error reading data',
-      error: error.message 
+      message: 'Server error during registration' 
     });
   }
 });
 
-// Download registrations as CSV
+// 🔍 2. VIEW ALL REGISTRATIONS (Admin/Verify)
+app.get('/api/registrations', (req, res) => {
+  try {
+    const data = readAllRegistrations();
+    
+    res.json({
+      success: true,
+      count: data.length,
+      data: data
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error reading data' 
+    });
+  }
+});
+
+// 📊 3. GET STATISTICS
+app.get('/api/stats', (req, res) => {
+  try {
+    const data = readAllRegistrations();
+    
+    const stats = {
+      total: data.length,
+      withProject: data.filter(d => d.projectId).length,
+      withoutProject: data.filter(d => !d.projectId).length,
+      uniqueUsers: new Set(data.map(d => d.identifier)).size,
+      last24Hours: data.filter(d => {
+        const regTime = new Date(d.timestamp);
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return regTime > oneDayAgo;
+      }).length
+    };
+    
+    res.json({
+      success: true,
+      stats: stats,
+      lastUpdated: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error calculating stats' 
+    });
+  }
+});
+
+// 📥 4. DOWNLOAD AS CSV (For Excel)
 app.get('/api/download', (req, res) => {
   try {
-    const data = readDataFile();
+    const data = readAllRegistrations();
     
     if (data.length === 0) {
-      return res.status(404).json({ 
+      return res.json({ 
         success: false, 
-        message: 'No data available' 
+        message: 'No data available to download' 
       });
     }
     
-    // Create CSV header
-    let csv = 'ID,Identifier,Phone,Project ID,Timestamp,IP Address,User Agent,Saved to Google,Google Status\n';
+    // Create CSV
+    let csv = 'ID,Identifier,Phone,Project ID,Timestamp,IP Address\n';
     
-    // Add data rows
     data.forEach(item => {
-      const savedStatus = item.savedToGoogle ? 'Yes' : 'No';
-      const googleStatus = item.googleStatus || item.googleError || 'Unknown';
-      csv += `"${item.id}","${item.identifier}","${item.phone}","${item.projectId}","${item.timestamp}","${item.ip}","${item.userAgent}","${savedStatus}","${googleStatus}"\n`;
+      csv += `"${item.id}","${item.identifier}","${item.phone}","${item.projectId || 'None'}","${item.timestamp}","${item.ip}"\n`;
     });
     
     res.header('Content-Type', 'text/csv');
@@ -243,233 +187,137 @@ app.get('/api/download', (req, res) => {
   } catch (error) {
     res.status(500).json({ 
       success: false, 
-      message: 'Error generating CSV',
-      error: error.message 
+      message: 'Error generating download' 
     });
   }
 });
 
-// Clear all data (use with caution - for admin purposes)
-app.delete('/api/clear', (req, res) => {
-  try {
-    // Optional: Add authentication here
-    const { adminKey } = req.query;
-    
-    if (adminKey !== 'winter2025') { // Change this to a secure key
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Unauthorized' 
-      });
-    }
-    
-    writeDataFile([]);
-    
-    res.json({ 
-      success: true, 
-      message: 'All data cleared',
-      count: 0 
-    });
-    
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error clearing data',
-      error: error.message 
-    });
-  }
+// 🏥 5. HEALTH CHECK
+app.get('/api/health', (req, res) => {
+  const data = readAllRegistrations();
+  
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    registrationsCount: data.length,
+    serverTime: new Date().toLocaleString(),
+    uptime: process.uptime()
+  });
 });
 
-// Stats endpoint
-app.get('/api/stats', (req, res) => {
+// 🌐 6. WEB VIEW (Nice HTML table)
+app.get('/admin/view', (req, res) => {
   try {
-    const data = readDataFile();
+    const data = readAllRegistrations();
     
-    const stats = {
-      totalRegistrations: data.length,
-      withProjectId: data.filter(item => item.projectId && item.projectId !== 'none').length,
-      withoutProjectId: data.filter(item => !item.projectId || item.projectId === 'none').length,
-      savedToGoogle: data.filter(item => item.savedToGoogle === true).length,
-      localOnly: data.filter(item => item.savedToGoogle === false).length,
-      uniqueIdentifiers: new Set(data.map(item => item.identifier)).size,
-      byProject: {}
-    };
+    let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Winter Projects - Registrations</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #1a6b4f; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f0f9f5; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .stats { background: #f0f9f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .download-btn { 
+          background: #1a6b4f; color: white; padding: 10px 20px; 
+          text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>📋 Winter Projects Registrations</h1>
+      
+      <div class="stats">
+        <strong>📊 Statistics:</strong><br>
+        • Total Registrations: ${data.length}<br>
+        • With Project: ${data.filter(d => d.projectId).length}<br>
+        • Unique Users: ${new Set(data.map(d => d.identifier)).size}<br>
+        • <a href="/api/download" class="download-btn">📥 Download CSV</a>
+        • <a href="/api/registrations" class="download-btn">📊 View JSON</a>
+      </div>
+      
+      <table>
+        <tr>
+          <th>ID</th><th>Identifier</th><th>Phone</th><th>Project</th><th>Timestamp</th>
+        </tr>
+    `;
     
-    // Count by project
     data.forEach(item => {
-      const project = item.projectId || 'none';
-      stats.byProject[project] = (stats.byProject[project] || 0) + 1;
+      html += `
+        <tr>
+          <td>${item.id}</td>
+          <td>${item.identifier}</td>
+          <td>${item.phone}</td>
+          <td>${item.projectId || '—'}</td>
+          <td>${new Date(item.timestamp).toLocaleString()}</td>
+        </tr>
+      `;
     });
     
-    // Recent registrations (last 24 hours)
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    stats.recent24h = data.filter(item => new Date(item.timestamp) > oneDayAgo).length;
+    html += `
+      </table>
+      <p style="margin-top: 30px; color: #666;">
+        Last updated: ${new Date().toLocaleString()}<br>
+        <small>Total records: ${data.length}</small>
+      </p>
+    </body>
+    </html>
+    `;
     
-    res.json({ 
-      success: true, 
-      stats 
-    });
+    res.send(html);
     
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error calculating stats',
-      error: error.message 
-    });
+    res.send('<h2>Error loading data</h2><p>' + error.message + '</p>');
   }
 });
 
-// Test Google Sheets connection with detailed logging
-app.get('/api/test-google', async (req, res) => {
+// ========== START SERVER ==========
+app.listen(PORT, '0.0.0.0', () => {
+  const initialData = readAllRegistrations();
+  console.log(`
+  🚀 Winter Projects Backend Started!
+  ==================================
+  📍 Port: ${PORT}
+  📁 Data file: ${DATA_FILE}
+  📊 Existing registrations: ${initialData.length}
+  
+  🔗 API Endpoints:
+  • Health: http://localhost:${PORT}/api/health
+  • Register: http://localhost:${PORT}/api/register
+  • View all: http://localhost:${PORT}/api/registrations
+  • Web view: http://localhost:${PORT}/admin/view
+  • Download CSV: http://localhost:${PORT}/api/download
+  
+  ✅ Ready to accept registrations!
+  `);
+});
+// Add this to your existing server.cjs (anywhere before app.listen)
+app.get('/admin/view', (req, res) => {
   try {
-    const testData = {
-      id: Date.now(),
-      identifier: 'test@iitb.ac.in',
-      phone: '9999999999',
-      projectId: 'test',
-      timestamp: new Date().toISOString(),
-      ip: 'test',
-      userAgent: 'API Test',
-      test: true
-    };
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8') || '[]');
     
-    console.log('🧪 Testing Google Sheets connection...');
-    console.log('📤 Sending test data:', testData);
+    let html = `<h1>Winter Projects Registrations (${data.length})</h1>`;
+    html += `<table border="1"><tr><th>ID</th><th>Identifier</th><th>Phone</th><th>Project</th><th>Time</th></tr>`;
     
-    const response = await axiosWithRedirects.post(GOOGLE_SHEET_URL, testData, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+    data.forEach(item => {
+      html += `<tr>
+        <td>${item.id}</td>
+        <td>${item.identifier}</td>
+        <td>${item.phone}</td>
+        <td>${item.projectId || '—'}</td>
+        <td>${new Date(item.timestamp).toLocaleString()}</td>
+      </tr>`;
     });
     
-    console.log('✅ Test response:', {
-      status: response.status,
-      data: response.data,
-      headers: response.headers
-    });
-    
-    res.json({ 
-      success: true, 
-      message: 'Google Sheets connection successful',
-      response: {
-        status: response.status,
-        data: response.data
-      },
-      testData 
-    });
+    html += `</table>`;
+    res.send(html);
     
   } catch (error) {
-    console.error('❌ Google Sheets test failed:', {
-      message: error.message,
-      code: error.code,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-    
-    res.status(500).json({ 
-      success: false, 
-      message: 'Google Sheets connection failed',
-      error: {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status
-      },
-      googleSheetUrl: GOOGLE_SHEET_URL,
-      suggestion: 'Check if script is deployed with "Anyone" access'
-    });
+    res.send('Error: ' + error.message);
   }
-});
-
-// NEW: Direct test endpoint that simulates what curl did
-app.get('/api/test-google-direct', async (req, res) => {
-  try {
-    // Simulate the exact curl command that showed 302 redirect
-    const testData = {
-      test: "data",
-      timestamp: "2024-01-15T10:30:00Z"
-    };
-    
-    console.log('🔗 Testing Google Sheets with exact curl data...');
-    
-    const response = await axiosWithRedirects.post(GOOGLE_SHEET_URL, testData, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      maxRedirects: 5,
-      validateStatus: function (status) {
-        // Accept all status codes including 302
-        return status >= 200 && status < 600;
-      }
-    });
-    
-    console.log('📋 Response details:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-      data: response.data
-    });
-    
-    res.json({
-      success: true,
-      message: 'Test completed',
-      result: {
-        status: response.status,
-        statusText: response.statusText,
-        redirected: response.request?.res?.responseUrl !== GOOGLE_SHEET_URL,
-        finalUrl: response.request?.res?.responseUrl,
-        data: response.data
-      }
-    });
-    
-  } catch (error) {
-    console.error('Test failed:', error.message);
-    res.json({
-      success: false,
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-  }
-});
-
-// CRITICAL: Start the server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📝 Register endpoint: http://localhost:${PORT}/api/register`);
-  console.log(`🧪 Test Google Sheets: http://localhost:${PORT}/api/test-google`);
-  console.log(`🔗 Test direct: http://localhost:${PORT}/api/test-google-direct`);
-  console.log(`📁 Local data file: ${DATA_FILE}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Google Sheets URL: ${GOOGLE_SHEET_URL}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('🔄 SIGTERM received, shutting down gracefully...');
-  server.close(() => {
-    console.log('👋 Server closed');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('🔄 SIGINT received, shutting down...');
-  server.close(() => {
-    console.log('👋 Server closed');
-    process.exit(0);
-  });
-});
-
-// Error handlers
-process.on('uncaughtException', (err) => {
-  console.error('💥 Uncaught Exception:', err);
-  // Don't exit in production, let it recover
-  if (process.env.NODE_ENV === 'production') {
-    console.log('🔄 Continuing in production mode...');
-  } else {
-    process.exit(1);
-  }
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
 });

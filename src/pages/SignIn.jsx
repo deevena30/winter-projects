@@ -77,14 +77,26 @@ export default function SignIn() {
 
     try {
       // Send data to backend
-      const response = await axios.post('${API_BASE}/api/register', {
-        identifier: identifier.toLowerCase(),
-        phone,
-        password,
-        projectId,
-        timestamp: new Date().toISOString()
-      });
-
+      const response = await axios.post('https://winter-projects.onrender.com/api/register', {
+  identifier: identifier.toLowerCase(),
+  phone,
+  projectId,  // Will be null if just logging in
+  timestamp: new Date().toISOString()
+});
+    // Then save to localStorage for frontend
+localStorage.setItem('user', JSON.stringify({
+  identifier,
+  phone,
+  projectId,
+  registeredAt: new Date().toISOString(),
+  // If registering for a project, mark it
+  ...(projectId && {
+    registeredProjects: [{
+      projectId,
+      registeredAt: new Date().toISOString()
+    }]
+  })
+}));
       if (response.data.success) {
         // Store in localStorage
         localStorage.setItem('user', JSON.stringify({
