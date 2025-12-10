@@ -4,7 +4,7 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "options": {
+      "config": {
         "outputDirectory": "dist"
       }
     },
