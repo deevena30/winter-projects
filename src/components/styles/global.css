@@ -1,0 +1,19 @@
+:root {
+  --green-dark: #0b3d2e;
+  --green-primary: #2e8b57;
+  --green-light: #e8f5e9;
+  --text-dark: #1b1b1b;
+  --text-light: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--green-light);
+  color: var(--text-dark);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}

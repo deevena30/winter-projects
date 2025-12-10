@@ -1,0 +1,23 @@
+.navbar {
+  background: var(--green-dark);
+  padding: 12px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  color: var(--text-light);
+}
+
+.links a {
+  color: var(--text-light);
+  margin-left: 20px;
+  font-weight: 500;
+}
+
+.signin {
+  padding: 6px 12px;
+  background: var(--green-primary);
+  border-radius: 6px;
+}

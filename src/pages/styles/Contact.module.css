@@ -1,0 +1,504 @@
+/* Contact.module.css */
+
+.container {
+  min-height: 100vh;
+  background: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Navbar Styles */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 40px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  text-decoration: none;
+}
+
+.logo svg {
+  flex-shrink: 0;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.navLink {
+  color: #333;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+  padding: 5px 0;
+  position: relative;
+}
+
+.navLink:hover {
+  color: #666;
+}
+
+.navLink:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #666;
+}
+
+/* Main Content */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  margin-bottom: 80px;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+}
+
+.heroTitle {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.heroSubtitle {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Team Section */
+.teamSection {
+  margin-bottom: 80px;
+  padding: 40px 0;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.sectionSubtitle {
+  font-size: 1.1rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 50px;
+  font-weight: 400;
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-top: 40px;
+}
+
+@media (max-width: 1024px) {
+  .teamGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .teamGrid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 40px auto 0;
+  }
+}
+
+/* Team Card */
+.teamCard {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #eaeaea;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.teamCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Member Image */
+.memberImage {
+  width: 240px;
+  height: 240px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 25px;
+  background-color: #f5f5f5;
+  position: relative;
+}
+
+.profileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.teamCard:hover .profileImage {
+  transform: scale(1.05);
+}
+
+/* Member Info */
+.memberInfo {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.memberName {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.memberRole {
+  font-size: 1rem;
+  color: #555;
+  font-weight: 600;
+  margin-bottom: 25px;
+  padding: 6px 15px;
+  background: #f0f0f0;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+/* Contact Details */
+.contactDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  padding: 8px 0;
+}
+
+.contactIcon {
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.contactIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contactLink {
+  color: #555;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  flex: 1;
+  text-align: left;
+  word-break: break-word;
+}
+
+.contactLink:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+/* Contact Form Section */
+.formSection {
+  margin-bottom: 80px;
+  padding: 40px 0;
+}
+
+.formContainer {
+  background: white;
+  border-radius: 15px;
+  padding: 50px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eaeaea;
+}
+
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .formContainer {
+    padding: 25px;
+  }
+}
+
+.formHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.formTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.formSubtitle {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+  font-weight: 400;
+}
+
+/* Contact Form */
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.formLabel {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.formInput {
+  padding: 16px 20px;
+  font-size: 1rem;
+  border: 2px solid #eaeaea;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  transition: all 0.3s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.formInput:focus {
+  border-color: #666;
+  background: #f9f9f9;
+}
+
+.formInput::placeholder {
+  color: #999;
+}
+
+.formTextarea {
+  padding: 16px 20px;
+  font-size: 1rem;
+  border: 2px solid #eaeaea;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  transition: all 0.3s ease;
+  outline: none;
+  resize: vertical;
+  min-height: 150px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.formTextarea:focus {
+  border-color: #666;
+  background: #f9f9f9;
+}
+
+.submitButton {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  align-self: center;
+  min-width: 200px;
+}
+
+.submitButton:hover {
+  background: #555;
+  transform: translateY(-2px);
+}
+
+.submitButton:active {
+  transform: translateY(0);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 30px 20px;
+  border-top: 1px solid #eaeaea;
+  color: #666;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.footer p {
+  margin-bottom: 15px;
+}
+
+.footer div {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer a {
+  color: #666;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  padding: 5px 0;
+}
+
+.footer a:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 20px;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .navLinks {
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .heroTitle {
+    font-size: 2.2rem;
+  }
+  
+  .heroSubtitle {
+    font-size: 1.1rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.6rem;
+  }
+  
+  .formTitle {
+    font-size: 1.5rem;
+  }
+  
+  .main {
+    padding: 40px 15px;
+  }
+  
+  .hero {
+    padding: 40px 15px;
+    margin-bottom: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 1.8rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.4rem;
+  }
+  
+  .memberName {
+    font-size: 1.2rem;
+  }
+  
+  .formTitle {
+    font-size: 1.3rem;
+  }
+  
+  .teamCard {
+    padding: 25px;
+  }
+  
+  .memberImage {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .submitButton {
+    width: 100%;
+    min-width: unset;
+  }
+}
