@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import styles from "./styles/SignIn.module.css";
+import API_BASE from '../config/api';
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export default function SignIn() {
 
     try {
       // Send data to backend
-      const response = await axios.post('http://localhost:5000/api/login', {
+      const response = await axios.post('${API_BASE}/api/register', {
         identifier: identifier.toLowerCase(),
         phone,
         password,
@@ -95,7 +96,7 @@ export default function SignIn() {
         // If there's a projectId, register for it directly
         if (projectId) {
           // Register for the project
-          const projectResponse = await axios.post('http://localhost:5000/api/register-project', {
+          const projectResponse = await axios.post('https://winter-projects.onrender.com/api/register', {
             identifier,
             projectId
           });

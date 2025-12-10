@@ -79,7 +79,7 @@ const handleRegister = async () => {
 
     // Optional: Send to backend if available
     try {
-      await fetch('http://localhost:5000/api/register', {
+      await fetch('https://winter-projects.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
