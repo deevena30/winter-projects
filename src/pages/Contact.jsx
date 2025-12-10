@@ -52,7 +52,7 @@ export default function Contact() {
           <span>Winter Projects 2025</span>
         </div>
         <div className={styles.navLinks}>
-          <Link to="/home" className={styles.navLink}>Home</Link>
+          <Link to="/" className={styles.navLink}>Home</Link>
           <Link to="/courses" className={styles.navLink}>Projects</Link>
         </div>
       </nav>
@@ -205,7 +205,7 @@ export default function Contact() {
         <div>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
-          <Link to="/home">Home</Link>
+          <Link to="/">Home</Link>
         </div>
       </footer>
     </div>
