@@ -4,14 +4,20 @@ import styles from "./styles/Home.module.css";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
   
   // Check if user is signed in
   React.useEffect(() => {
     const userData = localStorage.getItem('user');
     if (!userData) {
       navigate('/signin');
+    } else {
+      setIsCheckingAuth(false);
     }
   }, [navigate]);
+
+  // Prevent flash of content while checking auth
+  if (isCheckingAuth) return null; // Or return a <LoadingSpinner />
 
   const handleGetStarted = () => {
     navigate('/courses');
