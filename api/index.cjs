@@ -20,33 +20,96 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 });
 
-// Initialize database table
+// Initialize database table with migrations
 async function initializeDatabase() {
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS registrations (
-      id SERIAL PRIMARY KEY,
-      identifier VARCHAR(255) NOT NULL,
-      email VARCHAR(255),
-      roll_number VARCHAR(50),
-      phone VARCHAR(15) NOT NULL,
-      project_ids TEXT[],
-      password_hash VARCHAR(255),
-      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ip VARCHAR(100),
-      user_agent TEXT,
-      UNIQUE(identifier)
-    );
-    
-    CREATE INDEX IF NOT EXISTS idx_identifier ON registrations(identifier);
-    CREATE INDEX IF NOT EXISTS idx_email ON registrations(email);
-    CREATE INDEX IF NOT EXISTS idx_roll_number ON registrations(roll_number);
-  `;
-  
   try {
+    // First, create the table with all columns (this won't modify existing tables)
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS registrations (
+        id SERIAL PRIMARY KEY,
+        identifier VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        roll_number VARCHAR(50),
+        phone VARCHAR(15) NOT NULL,
+        project_ids TEXT[],
+        password_hash VARCHAR(255),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ip VARCHAR(100),
+        user_agent TEXT,
+        UNIQUE(identifier)
+      );
+    `;
+    
     await pool.query(createTableQuery);
-    console.log('✅ Database table ready');
+    console.log('✅ Database table created or already exists');
+    
+    // Now run migrations to add missing columns to existing table
+    await runMigrations();
+    
+    // Create indexes
+    await createIndexes();
+    
   } catch (error) {
-    console.error('❌ Error creating table:', error);
+    console.error('❌ Error initializing database:', error);
+  }
+}
+
+// Run database migrations
+async function runMigrations() {
+  try {
+    console.log('🔄 Running database migrations...');
+    
+    // Check if email column exists
+    const checkEmail = await pool.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'registrations' 
+      AND column_name = 'email'
+    `);
+    
+    if (checkEmail.rows.length === 0) {
+      console.log('📝 Adding email column...');
+      await pool.query('ALTER TABLE registrations ADD COLUMN email VARCHAR(255)');
+      console.log('✅ Added email column');
+    } else {
+      console.log('✅ Email column already exists');
+    }
+    
+    // Check if roll_number column exists
+    const checkRollNumber = await pool.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'registrations' 
+      AND column_name = 'roll_number'
+    `);
+    
+    if (checkRollNumber.rows.length === 0) {
+      console.log('📝 Adding roll_number column...');
+      await pool.query('ALTER TABLE registrations ADD COLUMN roll_number VARCHAR(50)');
+      console.log('✅ Added roll_number column');
+    } else {
+      console.log('✅ Roll_number column already exists');
+    }
+    
+    console.log('✅ Database migrations completed');
+    
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+  }
+}
+
+// Create indexes
+async function createIndexes() {
+  try {
+    console.log('🔧 Creating indexes...');
+    
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_identifier ON registrations(identifier)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_email ON registrations(email)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_roll_number ON registrations(roll_number)');
+    
+    console.log('✅ Indexes created');
+  } catch (error) {
+    console.error('❌ Error creating indexes:', error);
   }
 }
 
