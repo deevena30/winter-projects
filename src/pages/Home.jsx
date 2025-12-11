@@ -80,9 +80,6 @@ export default function Home() {
             sustainability and quantitative analysis through hands-on projects 
             focused on ESG integration, carbon accounting, and sustainable finance.
           </p>
-          <button onClick={handleGetStarted} className={styles.ctaButton}>
-            View Projects
-          </button>
         </div>
 
         {/* Project Overview Section */}
