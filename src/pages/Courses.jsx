@@ -10,26 +10,51 @@ export default function Courses() {
   const navigate = useNavigate();
   const [opened, setOpened] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [registeredProjects, setRegisteredProjects] = useState(new Set());
+  
+  // Initialize registeredProjects from localStorage immediately
+  const [registeredProjects, setRegisteredProjects] = useState(() => {
+    // This function runs only once when the component first mounts
+    try {
+      const userDataStr = localStorage.getItem('user');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        console.log("🔄 Initializing state from localStorage:", userData);
+        
+        // Check for projectIds first
+        if (userData.projectIds && Array.isArray(userData.projectIds)) {
+          return new Set(userData.projectIds);
+        }
+        // Check for registeredProjects (legacy format)
+        else if (userData.registeredProjects && Array.isArray(userData.registeredProjects)) {
+          const ids = userData.registeredProjects.map(p => {
+            if (typeof p === 'string') return p;
+            if (p && typeof p === 'object') return p.projectId || p.id;
+            return '';
+          }).filter(Boolean);
+          return new Set(ids);
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing from localStorage:", error);
+    }
+    return new Set(); // Default empty set
+  });
+  
   const [showSuccess, setShowSuccess] = useState(false);
   const [registeredProjectTitle, setRegisteredProjectTitle] = useState("");
   const [userData, setUserData] = useState(null);
   const [loadingProjectId, setLoadingProjectId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  // Load user data and registered projects on mount
+  // Load user data and sync with server
   useEffect(() => {
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
-    setIsLoading(true);
     const userDataStr = localStorage.getItem('user');
     
     if (!userDataStr) {
-      // No user data, redirect to signin
       navigate('/signin');
-      setIsLoading(false);
       return;
     }
 
@@ -37,58 +62,57 @@ export default function Courses() {
       const localUserData = JSON.parse(userDataStr);
       setUserData(localUserData);
       
-      // FIRST: Always load from localStorage immediately
-      let projectIds = [];
+      console.log("📋 Current localStorage data:", localUserData);
+      console.log("📊 Current registeredProjects state:", Array.from(registeredProjects));
       
-      if (localUserData.projectIds && localUserData.projectIds.length > 0) {
-        // Use projectIds array if available
-        projectIds = localUserData.projectIds;
-      } else if (localUserData.registeredProjects && localUserData.registeredProjects.length > 0) {
-        // Fallback to registeredProjects array (legacy format)
-        projectIds = localUserData.registeredProjects.map(p => p.projectId || p.id);
-      }
-      
-      // Set registered projects from localStorage immediately
-      setRegisteredProjects(new Set(projectIds));
-      
-      // SECOND: Try to sync with server in background
+      // Sync with server in background
       try {
         const response = await axios.get(
           `${API_URL}/user/${encodeURIComponent(localUserData.identifier)}`,
-          { timeout: 5000 } // Add timeout to prevent hanging
+          { timeout: 5000 }
         );
         
         if (response.data.success && response.data.data) {
           const serverData = response.data.data;
           const serverProjectIds = serverData.projectIds || [];
           
-          // Update local state with server data
-          const updatedUserData = {
-            ...localUserData,
-            projectIds: serverProjectIds,
-            phone: serverData.phone || localUserData.phone,
-            registeredAt: serverData.registeredAt || localUserData.registeredAt
-          };
-          
-          setUserData(updatedUserData);
-          localStorage.setItem('user', JSON.stringify(updatedUserData));
-          
-          // Update registered projects set if server has different data
+          // If server has different data, update both state and localStorage
           if (serverProjectIds.length > 0) {
-            setRegisteredProjects(new Set(serverProjectIds));
+            const serverSet = new Set(serverProjectIds);
+            const currentSet = registeredProjects;
+            
+            // Check if we need to update
+            let needsUpdate = false;
+            if (serverSet.size !== currentSet.size) {
+              needsUpdate = true;
+            } else {
+              for (const id of serverSet) {
+                if (!currentSet.has(id)) {
+                  needsUpdate = true;
+                  break;
+                }
+              }
+            }
+            
+            if (needsUpdate) {
+              console.log("🔄 Updating from server data:", serverProjectIds);
+              setRegisteredProjects(serverSet);
+              
+              // Update localStorage
+              const updatedUserData = {
+                ...localUserData,
+                projectIds: serverProjectIds
+              };
+              localStorage.setItem('user', JSON.stringify(updatedUserData));
+              setUserData(updatedUserData);
+            }
           }
         }
       } catch (err) {
-        console.log('Server sync failed, using local data:', err.message);
-        // We already have local data loaded, so continue
+        console.log('Server sync failed:', err.message);
       }
     } catch (error) {
       console.error("Error loading user data:", error);
-      // Clear corrupted data and redirect to signin
-      localStorage.removeItem('user');
-      navigate('/signin');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -120,15 +144,18 @@ export default function Courses() {
       });
 
       if (response.data.success) {
-        // Update local state
-        const updatedProjectIds = [...registeredProjects, projectId];
-        setRegisteredProjects(new Set(updatedProjectIds));
+        // Update state
+        const updatedSet = new Set(registeredProjects);
+        updatedSet.add(projectId);
+        setRegisteredProjects(updatedSet);
         
-        // Update localStorage - ensure projectIds array exists
+        // Update localStorage
+        const updatedProjectIds = Array.from(updatedSet);
         const updatedUserData = {
           ...currentUserData,
           projectIds: updatedProjectIds
         };
+        
         localStorage.setItem('user', JSON.stringify(updatedUserData));
         setUserData(updatedUserData);
         
@@ -140,24 +167,26 @@ export default function Courses() {
           setShowSuccess(false);
         }, 3000);
         
-        console.log(`✅ Successfully registered for: ${projectTitle}`);
+        console.log(`✅ Registered for: ${projectTitle}, IDs: ${updatedProjectIds}`);
       } else {
         alert(response.data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error("Error registering for project:", error);
+      console.error("Error registering:", error);
       
-      // Fallback: Save locally if backend fails
+      // Fallback: Save locally
       try {
         const currentUserData = JSON.parse(userDataStr);
-        const updatedProjectIds = [...registeredProjects, projectId];
+        const updatedSet = new Set(registeredProjects);
+        updatedSet.add(projectId);
+        setRegisteredProjects(updatedSet);
         
-        setRegisteredProjects(new Set(updatedProjectIds));
-        
+        const updatedProjectIds = Array.from(updatedSet);
         const updatedUserData = {
           ...currentUserData,
           projectIds: updatedProjectIds
         };
+        
         localStorage.setItem('user', JSON.stringify(updatedUserData));
         setUserData(updatedUserData);
         
@@ -168,10 +197,10 @@ export default function Courses() {
           setShowSuccess(false);
         }, 3000);
         
-        console.log('⚠️ Registered locally (backend unavailable)');
+        console.log('⚠️ Registered locally');
       } catch (fallbackError) {
-        console.error("Fallback registration failed:", fallbackError);
-        alert("Registration failed. Please try again.");
+        console.error("Fallback failed:", fallbackError);
+        alert("Registration failed.");
       }
     } finally {
       setLoadingProjectId(null);
@@ -182,24 +211,6 @@ export default function Courses() {
   const filteredProjects = activeFilter === "all" 
     ? projects 
     : projects.filter(p => p.category === activeFilter);
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className={styles.wrapper}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontSize: '1.2rem',
-          color: '#0a3d2c'
-        }}>
-          Loading your projects...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.wrapper}>
@@ -250,6 +261,8 @@ export default function Courses() {
           {filteredProjects.map((p) => {
             const isRegistered = registeredProjects.has(p.id);
             const isLoading = loadingProjectId === p.id;
+            
+            console.log(`Project ${p.id} (${p.title}): isRegistered = ${isRegistered}`); // Debug
             
             return (
               <div 
@@ -302,8 +315,7 @@ export default function Courses() {
           })}
         </div>
       </div>
-
-      {/* Modal - Same as before */}
+      {/* Modal */}
       {opened && (
         <div className={styles.modalOverlay} onClick={() => setOpened(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -311,9 +323,7 @@ export default function Courses() {
               <div>
                 <div className={styles.modalTags}>
                   <span className={styles.modalCategory}>{opened.category}</span>
-                  <span className={`${styles.modalDifficulty} ${styles[opened.difficulty.toLowerCase()]}`}>
-                    {opened.difficulty}
-                  </span>
+                  <span className={`${styles.modalDifficulty} ${styles[opened.difficulty.toLowerCase()]}`}></span>
                 </div>
                 <h2 className={styles.modalTitle}>{opened.title}</h2>
               </div>
@@ -323,7 +333,94 @@ export default function Courses() {
             </div>
             
             <div className={styles.modalBody}>
-              {/* ... modal body content ... */}
+              {/* Description */}
+              <div className={styles.modalSection}>
+                <h3 className={styles.modalSectionTitle}>Project Description</h3>
+                <p className={styles.modalText}>{opened.detailedDescription || opened.description}</p>
+              </div>
+              
+              {/* Objectives */}
+              {opened.objectives && (
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>Learning Objectives</h3>
+                  <p className={styles.modalText}>{opened.objectives}</p>
+                </div>
+              )}
+              
+              {/* Key Points */}
+              {opened.keypoints && opened.keypoints.length > 0 && (
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>Key Learning Areas</h3>
+                  <ul className={styles.modalList}>
+                    {opened.keypoints.map((point, index) => (
+                      <li key={index} className={styles.modalListItem}>
+                        <span className={styles.listBullet}>•</span>
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Prerequisites */}
+              {opened.prerequisites && opened.prerequisites.length > 0 && (
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>Prerequisites</h3>
+                  <ul className={styles.modalList}>
+                    {opened.prerequisites.map((req, index) => (
+                      <li key={index} className={styles.modalListItem}>
+                        <span className={styles.listBullet}>•</span>
+                        {req}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Deliverables */}
+              {opened.deliverables && opened.deliverables.length > 0 && (
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>Project Deliverables</h3>
+                  <ul className={styles.modalList}>
+                    {opened.deliverables.map((deliverable, index) => (
+                      <li key={index} className={styles.modalListItem}>
+                        <span className={styles.listBullet}>✓</span>
+                        {deliverable}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Outcomes */}
+              {opened.outcomes && (
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>Learning Outcomes</h3>
+                  <p className={styles.modalText}>{opened.outcomes}</p>
+                </div>
+              )}
+              
+              {/* Technologies */}
+              {opened.technologies && opened.technologies.length > 0 && (
+                <div className={styles.modalSection}>
+                  <h3 className={styles.modalSectionTitle}>Technologies & Tools</h3>
+                  <div className={styles.techTags}>
+                    {opened.technologies.map((tech, index) => (
+                      <span key={index} className={styles.techTag}>
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Special Note */}
+              {opened.specialNote && (
+                <div className={styles.specialNote}>
+                  <h4 className={styles.specialNoteTitle}>Special Note</h4>
+                  <p className={styles.specialNoteText}>{opened.specialNote}</p>
+                </div>
+              )}
             </div>
             
             <div className={styles.modalFooter}>
