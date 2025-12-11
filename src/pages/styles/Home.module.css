@@ -162,15 +162,15 @@
 /* Hero Section */
 .hero {
   text-align: center;
-  margin-bottom: 80px;
-  padding: 60px 0;
+  margin-bottom: 50px;
+  padding: 40px 0;
 }
 
 .heroTitle {
-  font-size: 2.8rem;
+  font-size: 2.6rem;
   font-weight: 800;
   color: #0a3d2c;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   line-height: 1.2;
 }
 
@@ -178,7 +178,7 @@
   font-size: 1.3rem;
   color: #5d6d7e;
   max-width: 800px;
-  margin: 0 auto 40px;
+  margin: 0 auto 30px;
   line-height: 1.6;
 }
 
