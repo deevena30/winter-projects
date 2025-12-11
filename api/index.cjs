@@ -185,14 +185,6 @@ app.post('/api/register', async (req, res) => {
       });
     }
     
-    // Validate IITB email if provided
-    if (normalizedEmail && !normalizedEmail.endsWith('@iitb.ac.in')) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please use IITB email address (@iitb.ac.in)'
-      });
-    }
-    
     // Check if user exists
     const checkUser = await pool.query(
       'SELECT * FROM registrations WHERE identifier = $1 OR email = $2 OR roll_number = $3',

@@ -2,7 +2,7 @@ export const projects = [
   {
     id: 1,
     title: "Sustainable Investing: Making Portfolios Green",
-    difficulty: "Intermediate",
+    difficulty: "Advanced",
     category: "Finance & ESG",
     description: "A comprehensive guide to integrating Environmental, Social, and Governance (ESG) principles into various investment vehicles.",
     detailedDescription: "This project serves as a comprehensive guide to integrating Environmental, Social, and Governance (ESG) principles into various investment vehicles, focusing particularly on Venture Capital (VC), Private Equity (PE), Real Estate (RE), and the bond market. Participants will learn to navigate key frameworks, understand challenges like greenwashing, and explore emerging trends like carbon markets and technology-driven solutions. The core objective is to move beyond conventional investment practices to create portfolios that balance financial returns with positive environmental and social impact.",
@@ -30,7 +30,7 @@ export const projects = [
   {
     id: 2,
     title: "Sustainable Supply Chain Blueprint Lab",
-    difficulty: "Intermediate",
+    difficulty: "Easy",
     category: "Operations & Sustainability",
     description: "End-to-end supply chain sustainability mapping using Life Cycle Assessment (LCA) thinking to trace environmental and social impacts.",
     detailedDescription: "This project takes a full value-chain view of sustainability. Participants pick a product and map its supply chain end-to-end (raw materials to end-of-life), using basic Life Cycle Assessment (LCA) thinking to trace material, energy, and emission flows and locate key environmental and social hotspots. At each stage, they assess ESG performance and hotspots in resource use, waste and circularity potential, local pollution, labour and community risks, governance/compliance, and indicative Scope 1, 2, and major Scope 3 contributions.",
@@ -59,7 +59,7 @@ export const projects = [
   {
     id: 3,
     title: "Climate Data Analytics: Corporate Carbon Modelling",
-    difficulty: "Advanced",
+    difficulty: "Easy",
     category: "Data Analytics & Sustainability",
     description: "Technical training in quantitative corporate sustainability management using GHG Accounting and Strategic Benchmarking.",
     detailedDescription: "This project is a technical training module focused exclusively on the quantitative management of corporate sustainability. It uses the discipline of advanced GHG Accounting and Strategic Benchmarking to equip participants with the skills to translate environmental data (emissions, intensity metrics) into operational models and strategic recommendations.",
@@ -89,7 +89,7 @@ export const projects = [
   {
     id: 4,
     title: "Corporate Sustainability: ESG Reporting & Ratings",
-    difficulty: "Intermediate",
+    difficulty: "Easy",
     category: "Corporate Strategy & ESG",
     description: "Practical understanding of ESG frameworks and rating systems with hands-on policy development.",
     detailedDescription: "As sustainability disclosures become integral to business strategy and investor decision-making, this project aims to equip students with a clear and practical understanding of how ESG frameworks operate in the real world. Participants will study the major global reporting and rating systems: DJSI, MSCI, Sustainalytics, and CDP along with India's BRSR requirements. The project covers how these frameworks evaluate companies, the metrics they rely on, and the role these assessments play in shaping corporate behaviour.",

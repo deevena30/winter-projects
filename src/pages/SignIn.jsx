@@ -62,17 +62,29 @@ export default function SignIn() {
     }
   };
 
-  const validateIITBEmail = (email) => {
-    if (!email) return false;
-    const domains = ['@iitb.ac.in'];
-    return domains.some(domain => email.toLowerCase().endsWith(domain));
-  };
+const validateIITBEmail = (email) => {
+  if (!email) return false;
 
-  const validateRollNumber = (roll) => {
-    if (!roll) return false;
-    // Format: 2 digits, 1 letter, 3-4 digits (e.g., 22B1234, 23ME10001)
-    return /^\d{2}[A-Z]\d{3,5}$/i.test(roll.trim());
-  };
+  // Simple general email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+};
+
+
+const validateRollnumber = (input) => {
+    if (!input) return false;
+
+    input = input.trim();
+
+    // Roll number: 2 digits + 1 letter + 3–5 digits (e.g., 22B1234, 23ME10001)
+    const rollRegex = /^\d{2}[A-Z]\d{3,5}$/i;
+
+    // Phone number: 10 digits (Indian format)
+    const phoneRegex = /^[6-9]\d{9}$/;
+
+    return rollRegex.test(input) || phoneRegex.test(input);
+};
+
 
   const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
 
@@ -280,14 +292,14 @@ export default function SignIn() {
         
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label htmlFor="email">IITB Email<span className={styles.required}>*</span></label>
+            <label htmlFor="email">Email<span className={styles.required}>*</span></label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder=" "
+              placeholder="IITB email or your gmail if not from IITB"
               className={styles.input}
               disabled={loading}
               autoComplete="email"
@@ -302,7 +314,7 @@ export default function SignIn() {
               name="rollNumber"
               value={formData.rollNumber}
               onChange={handleChange}
-              placeholder=" "
+              placeholder="Enter your phone number if not from IITB"
               className={styles.input}
               disabled={loading}
               autoComplete="off"
