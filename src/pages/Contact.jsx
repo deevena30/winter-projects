@@ -138,66 +138,6 @@ export default function Contact() {
             ))}
           </div>
         </section>
-
-        {/* Contact Form Section */}
-        <section className={styles.formSection}>
-          <div className={styles.formContainer}>
-            <div className={styles.formHeader}>
-              <h2 className={styles.formTitle}>Send Us a Message</h2>
-              <p className={styles.formSubtitle}>
-                Have questions about the projects? Reach out to us directly
-              </p>
-            </div>
-            
-            <form className={styles.contactForm}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="name" className={styles.formLabel}>Your Name</label>
-                  <input 
-                    type="text" 
-                    id="name" 
-                    className={styles.formInput}
-                    placeholder="Enter your name"
-                  />
-                </div>
-                
-                <div className={styles.formGroup}>
-                  <label htmlFor="email" className={styles.formLabel}>Email Address</label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    className={styles.formInput}
-                    placeholder="Enter your email"
-                  />
-                </div>
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label htmlFor="subject" className={styles.formLabel}>Subject</label>
-                <input 
-                  type="text" 
-                  id="subject" 
-                  className={styles.formInput}
-                  placeholder="What is this regarding?"
-                />
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label htmlFor="message" className={styles.formLabel}>Message</label>
-                <textarea 
-                  id="message" 
-                  className={styles.formTextarea}
-                  rows="5"
-                  placeholder="Type your message here..."
-                />
-              </div>
-              
-              <button type="submit" className={styles.submitButton}>
-                Send Message
-              </button>
-            </form>
-          </div>
-        </section>
       </main>
 
       <footer className={styles.footer}>
