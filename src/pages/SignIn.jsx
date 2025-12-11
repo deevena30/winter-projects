@@ -90,7 +90,7 @@ export default function SignIn() {
     }
 
     if (!validatePassword(password)) {
-      setError("Password must be at least 6 characters");
+      setError("");
       return;
     }
 
