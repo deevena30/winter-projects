@@ -58,6 +58,23 @@ app.use(express.json());
 
 // ========== API ENDPOINTS ==========
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Winter Projects API',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      register: 'POST /api/register',
+      getUser: 'GET /api/user/:identifier',
+      allRegistrations: '/api/registrations',
+      stats: '/api/stats',
+      download: '/api/download',
+      adminView: '/admin/view'
+    }
+  });
+});
+
 // 🎯 1. REGISTER/UPDATE USER
 app.post('/api/register', async (req, res) => {
   try {
@@ -308,6 +325,7 @@ app.get('/admin/view', async (req, res) => {
     <head>
       <title>Winter Projects - Registrations</title>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -475,22 +493,6 @@ app.get('/admin/view', async (req, res) => {
   }
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Winter Projects API',
-    endpoints: {
-      health: '/api/health',
-      register: 'POST /api/register',
-      getUser: 'GET /api/user/:identifier',
-      allRegistrations: '/api/registrations',
-      stats: '/api/stats',
-      download: '/api/download',
-      adminView: '/admin/view'
-    }
-  });
-});
-
 // ========== START SERVER ==========
 app.listen(PORT, '0.0.0.0', async () => {
   try {
@@ -499,18 +501,20 @@ app.listen(PORT, '0.0.0.0', async () => {
   🚀 Winter Projects Backend Started!
   ==================================
   📍 Port: ${PORT}
-  💾 Database: PostgreSQL (Connected)
+  💾 Database: PostgreSQL
   📊 Existing registrations: ${result.rows[0].count}
   
-  🔗 API Endpoints:
+  🔗 Endpoints Available:
+  • Root: /
   • Health: /api/health
   • Register: POST /api/register
   • Get user: GET /api/user/:identifier
   • View all: /api/registrations
-  • Web view: /admin/view
+  • Stats: /api/stats
+  • Admin view: /admin/view
   • Download: /api/download
   
-  ✅ Ready to accept registrations!
+  ✅ Ready!
     `);
   } catch (error) {
     console.error('❌ Startup error:', error);
@@ -523,3 +527,5 @@ process.on('SIGTERM', () => {
   pool.end();
   process.exit(0);
 });
+
+module.exports = app;
