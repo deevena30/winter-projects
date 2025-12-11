@@ -26,6 +26,8 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS registrations (
       id SERIAL PRIMARY KEY,
       identifier VARCHAR(255) NOT NULL,
+      email VARCHAR(255),
+      roll_number VARCHAR(50),
       phone VARCHAR(15) NOT NULL,
       project_ids TEXT[],
       password_hash VARCHAR(255),
@@ -36,6 +38,8 @@ async function initializeDatabase() {
     );
     
     CREATE INDEX IF NOT EXISTS idx_identifier ON registrations(identifier);
+    CREATE INDEX IF NOT EXISTS idx_email ON registrations(email);
+    CREATE INDEX IF NOT EXISTS idx_roll_number ON registrations(roll_number);
   `;
   
   try {
@@ -78,35 +82,60 @@ app.get('/', (req, res) => {
 // 🎯 1. REGISTER/UPDATE USER
 app.post('/api/register', async (req, res) => {
   try {
-    const { identifier, phone, projectId, password } = req.body;
+    const { identifier, email, rollNumber, phone, projectId, password } = req.body;
     
-    console.log('📝 Registration:', { identifier, phone, projectId });
+    console.log('📝 Registration:', { identifier, email, rollNumber, phone, projectId });
     
     if (!identifier || !phone) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Email/Roll number and phone are required' 
+        message: 'Identifier and phone are required' 
       });
     }
     
     const normalizedIdentifier = identifier.toLowerCase().trim();
+    const normalizedEmail = email ? email.toLowerCase().trim() : null;
+    const normalizedRollNumber = rollNumber ? rollNumber.trim() : null;
+    
+    // Validate that at least one of email or roll number is provided
+    if (!normalizedEmail && !normalizedRollNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide either email or roll number'
+      });
+    }
+    
+    // Validate IITB email if provided
+    if (normalizedEmail && !normalizedEmail.endsWith('@iitb.ac.in') && 
+        !normalizedEmail.endsWith('@iitbhu.ac.in') && !normalizedEmail.endsWith('@itbhu.ac.in')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please use IITB/IITBHU email address'
+      });
+    }
     
     // Check if user exists
     const checkUser = await pool.query(
-      'SELECT * FROM registrations WHERE identifier = $1',
-      [normalizedIdentifier]
+      'SELECT * FROM registrations WHERE identifier = $1 OR email = $2 OR roll_number = $3',
+      [normalizedIdentifier, normalizedEmail, normalizedRollNumber]
     );
     
     if (checkUser.rows.length > 0) {
-      // User exists - update project IDs
-      const existingProjects = checkUser.rows[0].project_ids || [];
+      // User exists - update project IDs and other info
+      const existingUser = checkUser.rows[0];
+      const existingProjects = existingUser.project_ids || [];
       const updatedProjects = projectId 
         ? [...new Set([...existingProjects, projectId])]
         : existingProjects;
       
       await pool.query(
-        'UPDATE registrations SET project_ids = $1, phone = $2 WHERE identifier = $3',
-        [updatedProjects, phone.trim(), normalizedIdentifier]
+        `UPDATE registrations 
+         SET project_ids = $1, 
+             phone = $2, 
+             email = COALESCE($3, email),
+             roll_number = COALESCE($4, roll_number)
+         WHERE identifier = $5 OR email = $3 OR roll_number = $4`,
+        [updatedProjects, phone.trim(), normalizedEmail, normalizedRollNumber, normalizedIdentifier]
       );
       
       return res.json({
@@ -114,6 +143,8 @@ app.post('/api/register', async (req, res) => {
         message: 'Registration updated!',
         data: {
           identifier: normalizedIdentifier,
+          email: normalizedEmail,
+          rollNumber: normalizedRollNumber,
           phone: phone.trim(),
           projectIds: updatedProjects
         }
@@ -124,10 +155,12 @@ app.post('/api/register', async (req, res) => {
     const projectIds = projectId ? [projectId] : [];
     
     await pool.query(
-      `INSERT INTO registrations (identifier, phone, project_ids, password_hash, ip, user_agent) 
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+      `INSERT INTO registrations (identifier, email, roll_number, phone, project_ids, password_hash, ip, user_agent) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         normalizedIdentifier,
+        normalizedEmail,
+        normalizedRollNumber,
         phone.trim(),
         projectIds,
         password || null,
@@ -141,6 +174,8 @@ app.post('/api/register', async (req, res) => {
       message: 'Registration successful!',
       data: {
         identifier: normalizedIdentifier,
+        email: normalizedEmail,
+        rollNumber: normalizedRollNumber,
         phone: phone.trim(),
         projectIds
       }
@@ -148,6 +183,15 @@ app.post('/api/register', async (req, res) => {
     
   } catch (error) {
     console.error('💥 Registration error:', error);
+    
+    // Handle duplicate key error
+    if (error.code === '23505') { // unique_violation
+      return res.status(400).json({
+        success: false,
+        message: 'Email or roll number already registered'
+      });
+    }
+    
     res.status(500).json({ 
       success: false, 
       message: 'Server error during registration',
@@ -163,7 +207,9 @@ app.get('/api/user/:identifier', async (req, res) => {
     const normalizedIdentifier = identifier.toLowerCase().trim();
     
     const result = await pool.query(
-      'SELECT identifier, phone, project_ids, timestamp FROM registrations WHERE identifier = $1',
+      `SELECT identifier, email, roll_number, phone, project_ids, timestamp 
+       FROM registrations 
+       WHERE identifier = $1 OR email = $1 OR roll_number = $1`,
       [normalizedIdentifier]
     );
     
@@ -174,13 +220,17 @@ app.get('/api/user/:identifier', async (req, res) => {
       });
     }
     
+    const user = result.rows[0];
+    
     res.json({
       success: true,
       data: {
-        identifier: result.rows[0].identifier,
-        phone: result.rows[0].phone,
-        projectIds: result.rows[0].project_ids || [],
-        registeredAt: result.rows[0].timestamp
+        identifier: user.identifier,
+        email: user.email,
+        rollNumber: user.roll_number,
+        phone: user.phone,
+        projectIds: user.project_ids || [],
+        registeredAt: user.timestamp
       }
     });
     
@@ -197,7 +247,9 @@ app.get('/api/user/:identifier', async (req, res) => {
 app.get('/api/registrations', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, identifier, phone, project_ids, timestamp FROM registrations ORDER BY timestamp DESC'
+      `SELECT id, identifier, email, roll_number, phone, project_ids, timestamp 
+       FROM registrations 
+       ORDER BY timestamp DESC`
     );
     
     res.json({
@@ -235,6 +287,15 @@ app.get('/api/stats', async (req, res) => {
       ORDER BY count DESC
     `);
     
+    // Get registration by identifier type
+    const emailCount = await pool.query(
+      "SELECT COUNT(*) as count FROM registrations WHERE email IS NOT NULL"
+    );
+    
+    const rollNumberCount = await pool.query(
+      "SELECT COUNT(*) as count FROM registrations WHERE roll_number IS NOT NULL"
+    );
+    
     res.json({
       success: true,
       stats: {
@@ -242,6 +303,8 @@ app.get('/api/stats', async (req, res) => {
         withProject: parseInt(withProjectResult.rows[0].count),
         withoutProject: parseInt(totalResult.rows[0].count) - parseInt(withProjectResult.rows[0].count),
         last24Hours: parseInt(last24Result.rows[0].count),
+        emailUsers: parseInt(emailCount.rows[0].count),
+        rollNumberUsers: parseInt(rollNumberCount.rows[0].count),
         projectDistribution: projectDistribution.rows
       },
       lastUpdated: new Date().toISOString()
@@ -260,7 +323,9 @@ app.get('/api/stats', async (req, res) => {
 app.get('/api/download', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM registrations ORDER BY timestamp DESC'
+      `SELECT id, identifier, email, roll_number, phone, project_ids, timestamp, ip, user_agent
+       FROM registrations 
+       ORDER BY timestamp DESC`
     );
     
     if (result.rows.length === 0) {
@@ -270,11 +335,11 @@ app.get('/api/download', async (req, res) => {
       });
     }
     
-    let csv = 'ID,Identifier,Phone,Project IDs,Timestamp,IP Address\n';
+    let csv = 'ID,Identifier,Email,Roll Number,Phone,Project IDs,Timestamp,IP Address,User Agent\n';
     
     result.rows.forEach(item => {
       const projectIds = (item.project_ids || []).join(';');
-      csv += `"${item.id}","${item.identifier}","${item.phone}","${projectIds}","${item.timestamp}","${item.ip || 'N/A'}"\n`;
+      csv += `"${item.id}","${item.identifier}","${item.email || ''}","${item.roll_number || ''}","${item.phone}","${projectIds}","${item.timestamp}","${item.ip || 'N/A'}","${item.user_agent || 'N/A'}"\n`;
     });
     
     res.header('Content-Type', 'text/csv');
@@ -310,11 +375,13 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// 🌐 7. WEB VIEW (Admin)
+// 🌐 7. WEB VIEW (Admin) - Updated to show email and roll number
 app.get('/admin/view', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM registrations ORDER BY timestamp DESC'
+      `SELECT id, identifier, email, roll_number, phone, project_ids, timestamp 
+       FROM registrations 
+       ORDER BY timestamp DESC`
     );
     
     const data = result.rows;
@@ -414,6 +481,7 @@ app.get('/admin/view', async (req, res) => {
           color: #666;
           font-size: 0.9em;
         }
+        .email-cell { font-family: monospace; font-size: 0.9em; }
       </style>
     </head>
     <body>
@@ -446,6 +514,8 @@ app.get('/admin/view', async (req, res) => {
             <tr>
               <th>ID</th>
               <th>Identifier</th>
+              <th>Email</th>
+              <th>Roll Number</th>
               <th>Phone</th>
               <th>Project IDs</th>
               <th>Registered At</th>
@@ -463,6 +533,8 @@ app.get('/admin/view', async (req, res) => {
         <tr>
           <td>${item.id}</td>
           <td>${item.identifier}</td>
+          <td class="email-cell">${item.email || '—'}</td>
+          <td>${item.roll_number || '—'}</td>
           <td>${item.phone}</td>
           <td>${projectBadges || '—'}</td>
           <td>${new Date(item.timestamp).toLocaleString()}</td>

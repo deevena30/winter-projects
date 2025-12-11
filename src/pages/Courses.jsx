@@ -95,12 +95,18 @@ export default function Courses() {
               setRegisteredProjects(serverSet);
               
               // Update localStorage
-              const updatedUserData = {
-                ...localUserData,
-                projectIds: serverProjectIds
-              };
-              localStorage.setItem('user', JSON.stringify(updatedUserData));
-              setUserData(updatedUserData);
+// Update localStorage
+const updatedUserData = {
+  ...localUserData,
+  identifier: serverData.identifier || localUserData.identifier,
+  email: serverData.email || localUserData.email,
+  rollNumber: serverData.rollNumber || localUserData.rollNumber,
+  phone: serverData.phone || localUserData.phone,
+  projectIds: serverProjectIds,
+  registeredAt: serverData.registeredAt || localUserData.registeredAt
+};
+localStorage.setItem('user', JSON.stringify(updatedUserData));
+setUserData(updatedUserData);
             }
           }
         }
@@ -140,13 +146,14 @@ export default function Courses() {
     try {
       const currentUserData = JSON.parse(userDataStr);
       
-      // Send registration to backend
       const response = await axios.post(`${API_URL}/register`, {
-        identifier: currentUserData.identifier,
-        phone: currentUserData.phone,
-        projectId: projectId,
-        timestamp: new Date().toISOString()
-      });
+  identifier: currentUserData.identifier,
+  email: currentUserData.email,
+  rollNumber: currentUserData.rollNumber,
+  phone: currentUserData.phone,
+  projectId: projectId,
+  timestamp: new Date().toISOString()
+});
 
       if (response.data.success) {
         // Update state
@@ -155,14 +162,18 @@ export default function Courses() {
         setRegisteredProjects(updatedSet);
         
         // Update localStorage
-        const updatedProjectIds = Array.from(updatedSet);
-        const updatedUserData = {
-          ...currentUserData,
-          projectIds: updatedProjectIds
-        };
-        
-        localStorage.setItem('user', JSON.stringify(updatedUserData));
-        setUserData(updatedUserData);
+// Update localStorage
+const updatedProjectIds = Array.from(updatedSet);
+const updatedUserData = {
+  ...currentUserData,
+  identifier: currentUserData.identifier || currentUserData.email || currentUserData.rollNumber,
+  email: currentUserData.email || null,
+  rollNumber: currentUserData.rollNumber || null,
+  projectIds: updatedProjectIds
+};
+
+localStorage.setItem('user', JSON.stringify(updatedUserData));
+setUserData(updatedUserData);
         
         // Show success message
         setRegisteredProjectTitle(projectTitle);
@@ -186,14 +197,18 @@ export default function Courses() {
         updatedSet.add(projectId);
         setRegisteredProjects(updatedSet);
         
-        const updatedProjectIds = Array.from(updatedSet);
-        const updatedUserData = {
-          ...currentUserData,
-          projectIds: updatedProjectIds
-        };
-        
-        localStorage.setItem('user', JSON.stringify(updatedUserData));
-        setUserData(updatedUserData);
+        // Update localStorage
+const updatedProjectIds = Array.from(updatedSet);
+const updatedUserData = {
+  ...currentUserData,
+  identifier: currentUserData.identifier || currentUserData.email || currentUserData.rollNumber,
+  email: currentUserData.email || null,
+  rollNumber: currentUserData.rollNumber || null,
+  projectIds: updatedProjectIds
+};
+
+localStorage.setItem('user', JSON.stringify(updatedUserData));
+setUserData(updatedUserData);
         
         setRegisteredProjectTitle(projectTitle);
         setShowSuccess(true);
@@ -241,20 +256,22 @@ export default function Courses() {
         </div>
       )}
 
-      {/* User Info Banner */}
-      {userData && (
-        <div className={styles.userBanner}>
-          <div className={styles.userInfo}>
-            <span className={styles.userLabel}>Logged in as:</span>
-            <span className={styles.userName}>{userData.identifier}</span>
-            {registeredProjects.size > 0 && (
-              <span className={styles.projectCount}>
-                {registeredProjects.size} {registeredProjects.size === 1 ? 'project' : 'projects'} registered
-              </span>
-            )}
-          </div>
-        </div>
+{/* User Info Banner */}
+{userData && (
+  <div className={styles.userBanner}>
+    <div className={styles.userInfo}>
+      <span className={styles.userLabel}>Logged in as:</span>
+      <span className={styles.userName}>
+        {userData.email || userData.rollNumber || userData.identifier}
+      </span>
+      {registeredProjects.size > 0 && (
+        <span className={styles.projectCount}>
+          {registeredProjects.size} {registeredProjects.size === 1 ? 'project' : 'projects'} registered
+        </span>
       )}
+    </div>
+  </div>
+)}
 
       <div className={styles.heroSection}>
         <h1 className={styles.heading}>Winter Project Tracks</h1>

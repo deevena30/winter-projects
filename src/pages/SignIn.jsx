@@ -10,7 +10,8 @@ export default function SignIn() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
-    identifier: "", 
+    email: "",
+    rollNumber: "",
     phone: "",
     password: "",
     projectId: null,
@@ -48,6 +49,8 @@ export default function SignIn() {
         const serverData = response.data.data;
         const updatedUser = {
           identifier: serverData.identifier,
+          email: serverData.email,
+          rollNumber: serverData.rollNumber,
           phone: serverData.phone,
           projectIds: serverData.projectIds || [],
           registeredAt: serverData.registeredAt
@@ -60,8 +63,18 @@ export default function SignIn() {
     }
   };
 
-  const validateIITBEmail = (email) => email.endsWith('@iitb.ac.in') || email.endsWith('@iitbhu.ac.in');
-  const validateRollNumber = (roll) => /^\d{2}[A-Z]\d{3,4}$/i.test(roll);
+  const validateIITBEmail = (email) => {
+    if (!email) return false;
+    const domains = ['@iitb.ac.in', '@iitbhu.ac.in', '@itbhu.ac.in'];
+    return domains.some(domain => email.toLowerCase().endsWith(domain));
+  };
+
+  const validateRollNumber = (roll) => {
+    if (!roll) return false;
+    // Format: 2 digits, 1 letter, 3-4 digits (e.g., 22B1234, 23ME10001)
+    return /^\d{2}[A-Z]\d{3,5}$/i.test(roll.trim());
+  };
+
   const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
   const validatePassword = (password) => password.length >= 6;
 
@@ -69,18 +82,23 @@ export default function SignIn() {
     e.preventDefault();
     setError("");
 
-    const { identifier, phone, password, projectId } = formData;
+    const { email, rollNumber, phone, password, projectId } = formData;
 
-    if (!identifier.trim() || !phone.trim() || !password.trim()) {
-      setError("Please fill all fields");
+    // Check if at least one identifier is provided
+    if ((!email.trim() && !rollNumber.trim()) || !phone.trim() || !password.trim()) {
+      setError("Please fill all required fields");
       return;
     }
 
-    const isEmail = identifier.includes('@');
-    const isValidIdentifier = isEmail ? validateIITBEmail(identifier) : validateRollNumber(identifier);
+    // Validate email if provided
+    if (email.trim() && !validateIITBEmail(email)) {
+      setError("Please use a valid IITB/IITBHU email address");
+      return;
+    }
 
-    if (!isValidIdentifier) {
-      setError(isEmail ? "Please use IITB email" : "Invalid roll number format");
+    // Validate roll number if provided
+    if (rollNumber.trim() && !validateRollNumber(rollNumber)) {
+      setError("Invalid roll number format (e.g., 22B1234)");
       return;
     }
 
@@ -90,16 +108,21 @@ export default function SignIn() {
     }
 
     if (!validatePassword(password)) {
-      setError("");
+      setError("Password must be at least 6 characters");
       return;
     }
 
     setLoading(true);
 
     try {
+      // Create identifier: email if provided, otherwise roll number
+      const identifier = email.trim() || rollNumber.trim();
+      
       // Register/update user on backend
       const response = await axios.post(`${API_URL}/register`, {
         identifier: identifier.toLowerCase(),
+        email: email.trim() || null,
+        rollNumber: rollNumber.trim() || null,
         phone,
         projectId,
         password,
@@ -125,8 +148,11 @@ export default function SignIn() {
       console.error("Login error:", err);
       
       // Fallback: Store locally if server fails
+      const identifier = email.trim() || rollNumber.trim();
       const userData = {
         identifier: identifier.toLowerCase(),
+        email: email.trim() || null,
+        rollNumber: rollNumber.trim() || null,
         phone,
         projectIds: projectId ? [projectId] : [],
         loggedInAt: new Date().toISOString()
@@ -152,7 +178,8 @@ export default function SignIn() {
     setIsLoggedIn(false);
     setUserData(null);
     setFormData({
-      identifier: "",
+      email: "",
+      rollNumber: "",
       phone: "",
       password: "",
       projectId: null,
@@ -165,6 +192,9 @@ export default function SignIn() {
     if (name === 'phone') {
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
       setFormData(prev => ({ ...prev, [name]: numericValue }));
+    } else if (name === 'rollNumber') {
+      // Convert to uppercase for roll number
+      setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -179,10 +209,19 @@ export default function SignIn() {
           <h2 className={styles.title}>Your Profile</h2>
           
           <div className={styles.profileInfo}>
-            <div className={styles.infoItem}>
-              <strong>Email/Roll Number:</strong>
-              <span>{userData.identifier}</span>
-            </div>
+            {userData.email && (
+              <div className={styles.infoItem}>
+                <strong>Email:</strong>
+                <span>{userData.email}</span>
+              </div>
+            )}
+            
+            {userData.rollNumber && (
+              <div className={styles.infoItem}>
+                <strong>Roll Number:</strong>
+                <span>{userData.rollNumber}</span>
+              </div>
+            )}
             
             <div className={styles.infoItem}>
               <strong>Phone:</strong>
@@ -245,16 +284,8 @@ export default function SignIn() {
         </h2>
         
         {formData.projectId && formData.projectTitle && (
-          <div style={{
-            background: '#e3f2fd',
-            padding: '12px 16px',
-            borderRadius: '10px',
-            marginBottom: '20px',
-            textAlign: 'center',
-            color: '#1565c0',
-            fontWeight: '600'
-          }}>
-            📚 {formData.projectTitle}
+          <div className={styles.projectNotice}>
+            <span>📚</span> {formData.projectTitle}
           </div>
         )}
         
@@ -266,54 +297,77 @@ export default function SignIn() {
         
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label htmlFor="identifier">Email or Roll Number</label>
+            <label htmlFor="email">IITB/IITBHU Email <span className={styles.optional}>(optional)</span></label>
             <input
-              type="text"
-              id="identifier"
-              name="identifier"
-              value={formData.identifier}
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
-              placeholder="example@iitb.ac.in or 22B1234"
+              placeholder="example@iitb.ac.in or example@iitbhu.ac.in"
               className={styles.input}
               disabled={loading}
-              autoComplete="username"
+              autoComplete="email"
             />
           </div>
           
           <div className={styles.inputGroup}>
-            <label htmlFor="phone">Phone Number</label>
+            <label htmlFor="rollNumber">Roll Number <span className={styles.optional}>(optional)</span></label>
+            <input
+              type="text"
+              id="rollNumber"
+              name="rollNumber"
+              value={formData.rollNumber}
+              onChange={handleChange}
+              placeholder="22B1234 or 23ME10001"
+              className={styles.input}
+              disabled={loading}
+              autoComplete="off"
+            />
+          </div>
+          
+          <div className={styles.inputGroup}>
+            <label htmlFor="phone">Phone Number <span className={styles.required}>*</span></label>
             <input
               type="tel"
               id="phone"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="10-digit mobile number"
+              placeholder="Preferably whatsapp number"
               className={styles.input}
               disabled={loading}
+              required
               autoComplete="tel"
             />
+            <small className={styles.helperText}>At least one of email or roll number is required</small>
           </div>
           
           <div className={styles.inputGroup}>
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Password <span className={styles.required}>*</span></label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder=" "
+              placeholder="Enter your password"
               className={styles.input}
               disabled={loading}
+              required
               autoComplete="current-password"
             />
+            <small className={styles.helperText}>Minimum 6 characters</small>
+          </div>
+          
+          <div className={styles.infoBox}>
+            <p>ℹ️ Please provide at least one of: Email or Roll Number</p>
           </div>
           
           <button 
             type="submit" 
             className={styles.submitButton}
-            disabled={loading}
+            disabled={loading || (!formData.email.trim() && !formData.rollNumber.trim())}
           >
             {loading ? 'Processing...' : (formData.projectId ? 'Register for Project' : 'Sign In')}
           </button>

@@ -14,7 +14,7 @@
   border-radius: 20px;
   padding: 50px;
   width: 100%;
-  max-width: 520px;
+  max-width: 560px;
   box-shadow: 0 20px 60px rgba(10, 61, 44, 0.12);
   animation: slideUp 0.4s ease-out;
 }
@@ -37,6 +37,25 @@
   margin: 0 0 30px 0;
   text-align: center;
   line-height: 1.2;
+}
+
+.projectNotice {
+  background: #e3f2fd;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #1565c0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid #bbdefb;
+}
+
+.projectNotice span {
+  font-size: 1.2rem;
 }
 
 /* Error Message */
@@ -76,6 +95,26 @@
   font-weight: 600;
   color: #0a3d2c;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.required {
+  color: #e53e3e;
+  font-weight: bold;
+}
+
+.optional {
+  color: #718096;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.helperText {
+  color: #718096;
+  font-size: 0.85rem;
+  margin-top: 4px;
 }
 
 .input {
@@ -105,6 +144,29 @@
   background: #f7fafc;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Info Box */
+.infoBox {
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  border: 2px solid #ffd54f;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 10px 0;
+}
+
+.infoBox p {
+  margin: 0;
+  color: #e65100;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoBox p::before {
+  content: 'ℹ️';
 }
 
 /* Submit Button */
@@ -275,6 +337,7 @@
 @media (max-width: 640px) {
   .signInBox {
     padding: 35px 25px;
+    max-width: 100%;
   }
   
   .title {
@@ -321,5 +384,9 @@
   .submitButton {
     padding: 14px 20px;
     font-size: 1rem;
+  }
+  
+  .infoBox p {
+    font-size: 0.9rem;
   }
 }
