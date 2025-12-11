@@ -102,7 +102,7 @@ const validateRollNumber = (input) => {
 
     // Validate email if provided
     if (email.trim() && !validateIITBEmail(email)) {
-      setError("Please use a valid IITB email");
+      setError("Please use a valid email");
       return;
     }
 
