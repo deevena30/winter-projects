@@ -296,10 +296,10 @@
   border: 1px solid #81c784;
 }
 
-.card.intermediate .difficultyTag {
+.card.easy .difficultyTag {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
   color: #e65100;
-  border: 1px solid #ffb74d;
+  border: 1px solid #42ad3e;
 }
 
 .card.advanced .difficultyTag {
