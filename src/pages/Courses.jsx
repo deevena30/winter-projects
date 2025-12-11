@@ -3,6 +3,18 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { projects } from "../data/projects";
 import styles from "./styles/Courses.module.css";
+import first from "../assets/sustainable_investing_first.jpg";
+import second from "../assets/second_supply_chain.jpg";
+import third from "../assets/third.jpg";
+import fourth from "../assets/fourth.jpg";
+
+// Create image mapping
+const projectImages = {
+  1: first,
+  2: second,
+  3: third,
+  4: fourth
+};
 
 const API_URL = 'https://winter-projects.onrender.com/api';
 
@@ -13,18 +25,15 @@ export default function Courses() {
   
   // Initialize registeredProjects from localStorage immediately
   const [registeredProjects, setRegisteredProjects] = useState(() => {
-    // This function runs only once when the component first mounts
     try {
       const userDataStr = localStorage.getItem('user');
       if (userDataStr) {
         const userData = JSON.parse(userDataStr);
         console.log("🔄 Initializing state from localStorage:", userData);
         
-        // Check for projectIds first
         if (userData.projectIds && Array.isArray(userData.projectIds)) {
           return new Set(userData.projectIds);
         }
-        // Check for registeredProjects (legacy format)
         else if (userData.registeredProjects && Array.isArray(userData.registeredProjects)) {
           const ids = userData.registeredProjects.map(p => {
             if (typeof p === 'string') return p;
@@ -37,7 +46,7 @@ export default function Courses() {
     } catch (error) {
       console.error("Error initializing from localStorage:", error);
     }
-    return new Set(); // Default empty set
+    return new Set();
   });
   
   const [showSuccess, setShowSuccess] = useState(false);
@@ -45,7 +54,6 @@ export default function Courses() {
   const [userData, setUserData] = useState(null);
   const [loadingProjectId, setLoadingProjectId] = useState(null);
 
-  // Load user data and sync with server
   useEffect(() => {
     loadUserData();
   }, []);
@@ -62,7 +70,6 @@ export default function Courses() {
       const localUserData = JSON.parse(userDataStr);
       setUserData(localUserData);
       
-      // Sync with server in background
       try {
         const response = await axios.get(
           `${API_URL}/user/${encodeURIComponent(localUserData.identifier)}`,
@@ -73,12 +80,10 @@ export default function Courses() {
           const serverData = response.data.data;
           const serverProjectIds = serverData.projectIds || [];
           
-          // If server has different data, update both state and localStorage
           if (serverProjectIds.length > 0) {
             const serverSet = new Set(serverProjectIds);
             const currentSet = registeredProjects;
             
-            // Check if we need to update
             let needsUpdate = false;
             if (serverSet.size !== currentSet.size) {
               needsUpdate = true;
@@ -93,20 +98,17 @@ export default function Courses() {
             
             if (needsUpdate) {
               setRegisteredProjects(serverSet);
-              
-              // Update localStorage
-// Update localStorage
-const updatedUserData = {
-  ...localUserData,
-  identifier: serverData.identifier || localUserData.identifier,
-  email: serverData.email || localUserData.email,
-  rollNumber: serverData.rollNumber || localUserData.rollNumber,
-  phone: serverData.phone || localUserData.phone,
-  projectIds: serverProjectIds,
-  registeredAt: serverData.registeredAt || localUserData.registeredAt
-};
-localStorage.setItem('user', JSON.stringify(updatedUserData));
-setUserData(updatedUserData);
+              const updatedUserData = {
+                ...localUserData,
+                identifier: serverData.identifier || localUserData.identifier,
+                email: serverData.email || localUserData.email,
+                rollNumber: serverData.rollNumber || localUserData.rollNumber,
+                phone: serverData.phone || localUserData.phone,
+                projectIds: serverProjectIds,
+                registeredAt: serverData.registeredAt || localUserData.registeredAt
+              };
+              localStorage.setItem('user', JSON.stringify(updatedUserData));
+              setUserData(updatedUserData);
             }
           }
         }
@@ -119,7 +121,6 @@ setUserData(updatedUserData);
   };
 
   const handleRegister = async (projectId, projectTitle) => {
-    // Show confirmation dialog with warning
     const confirmRegistration = window.confirm(
       `Are you sure you want to register for "${projectTitle}"?`
     );
@@ -135,7 +136,6 @@ setUserData(updatedUserData);
       return;
     }
 
-    // Check if already registered
     if (registeredProjects.has(projectId)) {
       alert("You're already registered for this project!");
       return;
@@ -147,35 +147,31 @@ setUserData(updatedUserData);
       const currentUserData = JSON.parse(userDataStr);
       
       const response = await axios.post(`${API_URL}/register`, {
-  identifier: currentUserData.identifier,
-  email: currentUserData.email,
-  rollNumber: currentUserData.rollNumber,
-  phone: currentUserData.phone,
-  projectId: projectId,
-  timestamp: new Date().toISOString()
-});
+        identifier: currentUserData.identifier,
+        email: currentUserData.email,
+        rollNumber: currentUserData.rollNumber,
+        phone: currentUserData.phone,
+        projectId: projectId,
+        timestamp: new Date().toISOString()
+      });
 
       if (response.data.success) {
-        // Update state
         const updatedSet = new Set(registeredProjects);
         updatedSet.add(projectId);
         setRegisteredProjects(updatedSet);
         
-        // Update localStorage
-// Update localStorage
-const updatedProjectIds = Array.from(updatedSet);
-const updatedUserData = {
-  ...currentUserData,
-  identifier: currentUserData.identifier || currentUserData.email || currentUserData.rollNumber,
-  email: currentUserData.email || null,
-  rollNumber: currentUserData.rollNumber || null,
-  projectIds: updatedProjectIds
-};
+        const updatedProjectIds = Array.from(updatedSet);
+        const updatedUserData = {
+          ...currentUserData,
+          identifier: currentUserData.identifier || currentUserData.email || currentUserData.rollNumber,
+          email: currentUserData.email || null,
+          rollNumber: currentUserData.rollNumber || null,
+          projectIds: updatedProjectIds
+        };
 
-localStorage.setItem('user', JSON.stringify(updatedUserData));
-setUserData(updatedUserData);
+        localStorage.setItem('user', JSON.stringify(updatedUserData));
+        setUserData(updatedUserData);
         
-        // Show success message
         setRegisteredProjectTitle(projectTitle);
         setShowSuccess(true);
         
@@ -190,25 +186,23 @@ setUserData(updatedUserData);
     } catch (error) {
       console.error("Error registering:", error);
       
-      // Fallback: Save locally
       try {
         const currentUserData = JSON.parse(userDataStr);
         const updatedSet = new Set(registeredProjects);
         updatedSet.add(projectId);
         setRegisteredProjects(updatedSet);
         
-        // Update localStorage
-const updatedProjectIds = Array.from(updatedSet);
-const updatedUserData = {
-  ...currentUserData,
-  identifier: currentUserData.identifier || currentUserData.email || currentUserData.rollNumber,
-  email: currentUserData.email || null,
-  rollNumber: currentUserData.rollNumber || null,
-  projectIds: updatedProjectIds
-};
+        const updatedProjectIds = Array.from(updatedSet);
+        const updatedUserData = {
+          ...currentUserData,
+          identifier: currentUserData.identifier || currentUserData.email || currentUserData.rollNumber,
+          email: currentUserData.email || null,
+          rollNumber: currentUserData.rollNumber || null,
+          projectIds: updatedProjectIds
+        };
 
-localStorage.setItem('user', JSON.stringify(updatedUserData));
-setUserData(updatedUserData);
+        localStorage.setItem('user', JSON.stringify(updatedUserData));
+        setUserData(updatedUserData);
         
         setRegisteredProjectTitle(projectTitle);
         setShowSuccess(true);
@@ -234,7 +228,6 @@ setUserData(updatedUserData);
 
   return (
     <div className={styles.wrapper}>
-      {/* Success Message */}
       {showSuccess && (
         <div className={styles.successMessage}>
           <div className={styles.successContent}>
@@ -256,22 +249,21 @@ setUserData(updatedUserData);
         </div>
       )}
 
-{/* User Info Banner */}
-{userData && (
-  <div className={styles.userBanner}>
-    <div className={styles.userInfo}>
-      <span className={styles.userLabel}>Logged in as:</span>
-      <span className={styles.userName}>
-        {userData.email || userData.rollNumber || userData.identifier}
-      </span>
-      {registeredProjects.size > 0 && (
-        <span className={styles.projectCount}>
-          {registeredProjects.size} {registeredProjects.size === 1 ? 'project' : 'projects'} registered
-        </span>
+      {userData && (
+        <div className={styles.userBanner}>
+          <div className={styles.userInfo}>
+            <span className={styles.userLabel}>Logged in as:</span>
+            <span className={styles.userName}>
+              {userData.email || userData.rollNumber || userData.identifier}
+            </span>
+            {registeredProjects.size > 0 && (
+              <span className={styles.projectCount}>
+                {registeredProjects.size} {registeredProjects.size === 1 ? 'project' : 'projects'} registered
+              </span>
+            )}
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-)}
 
       <div className={styles.heroSection}>
         <h1 className={styles.heading}>Winter Project Tracks</h1>
@@ -283,53 +275,66 @@ setUserData(updatedUserData);
           {filteredProjects.map((p) => {
             const isRegistered = registeredProjects.has(p.id);
             const isLoading = loadingProjectId === p.id;
+            const projectImage = projectImages[p.id];
             
             return (
               <div 
                 key={p.id}
                 className={`${styles.card} ${styles[p.difficulty.toLowerCase()]}`}
               >
-                <div className={styles.cardHeader}>
-                  <span className={styles.categoryTag}>
-                    {p.category}
-                  </span>
-                  <span className={`${styles.difficultyTag} ${styles[p.difficulty.toLowerCase()]}`}>
-                    {p.difficulty}
-                  </span>
+                {/* Project Image */}
+                <div className={styles.cardImageContainer}>
+                  <img 
+                    src={projectImage} 
+                    alt={p.title}
+                    className={styles.cardImage}
+                  />
+                  <div className={styles.cardImageOverlay}></div>
                 </div>
                 
-                <h3 className={styles.cardTitle}>{p.title}</h3>
-                <p className={styles.cardDescription}>{p.description}</p>
-                
-                <div className={styles.cardActions}>
-                  <button 
-                    className={styles.viewDetailsBtn}
-                    onClick={() => setOpened(p)}
-                  >
-                    View Details
-                  </button>
+                <div className={styles.cardContent}>
+                  <div className={styles.cardHeader}>
+                    <span className={styles.categoryTag}>
+                      {p.category}
+                    </span>
+                    <span className={`${styles.difficultyTag} ${styles[p.difficulty.toLowerCase()]}`}>
+                      {p.difficulty}
+                    </span>
+                  </div>
                   
-                  {isRegistered ? (
-                    <button className={styles.registeredBtn} disabled title="You cannot unregister after registering">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M22 4L12 14.01L9 11.01" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Registered!
-                    </button>
-                  ) : (
+                  <h3 className={styles.cardTitle}>{p.title}</h3>
+                  <p className={styles.cardDescription}>{p.description}</p>
+                  
+                  <div className={styles.cardActions}>
                     <button 
-                      className={styles.registerBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRegister(p.id, p.title);
-                      }}
-                      disabled={isLoading}
-                      title="Note: You cannot unregister after registering. Please choose carefully."
+                      className={styles.viewDetailsBtn}
+                      onClick={() => setOpened(p)}
                     >
-                      {isLoading ? 'Processing...' : 'Register Now'}
+                      View Details
                     </button>
-                  )}
+                    
+                    {isRegistered ? (
+                      <button className={styles.registeredBtn} disabled title="You cannot unregister after registering">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M22 4L12 14.01L9 11.01" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Registered!
+                      </button>
+                    ) : (
+                      <button 
+                        className={styles.registerBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRegister(p.id, p.title);
+                        }}
+                        disabled={isLoading}
+                        title="Note: You cannot unregister after registering. Please choose carefully."
+                      >
+                        {isLoading ? 'Processing...' : 'Register Now'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -337,7 +342,6 @@ setUserData(updatedUserData);
         </div>
       </div>
 
-      {/* Modal */}
       {opened && (
         <div className={styles.modalOverlay} onClick={() => setOpened(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -357,13 +361,11 @@ setUserData(updatedUserData);
             </div>
             
             <div className={styles.modalBody}>
-              {/* Description */}
               <div className={styles.modalSection}>
                 <h3 className={styles.modalSectionTitle}>Project Description</h3>
                 <p className={styles.modalText}>{opened.detailedDescription || opened.description}</p>
               </div>
               
-              {/* Objectives */}
               {opened.objectives && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Learning Objectives</h3>
@@ -371,7 +373,6 @@ setUserData(updatedUserData);
                 </div>
               )}
               
-              {/* Key Points */}
               {opened.keypoints && opened.keypoints.length > 0 && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Key Learning Areas</h3>
@@ -386,7 +387,6 @@ setUserData(updatedUserData);
                 </div>
               )}
               
-              {/* Prerequisites */}
               {opened.prerequisites && opened.prerequisites.length > 0 && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Prerequisites</h3>
@@ -401,7 +401,6 @@ setUserData(updatedUserData);
                 </div>
               )}
               
-              {/* Deliverables */}
               {opened.deliverables && opened.deliverables.length > 0 && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Project Deliverables</h3>
@@ -416,7 +415,6 @@ setUserData(updatedUserData);
                 </div>
               )}
               
-              {/* Outcomes */}
               {opened.outcomes && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Learning Outcomes</h3>
@@ -424,7 +422,6 @@ setUserData(updatedUserData);
                 </div>
               )}
               
-              {/* Technologies */}
               {opened.technologies && opened.technologies.length > 0 && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Technologies & Tools</h3>
