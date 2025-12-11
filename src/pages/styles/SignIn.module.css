@@ -1,5 +1,88 @@
 /* SignIn.module.css */
+/* Add these to your existing SignIn.module.css */
 
+.profileInfo {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.infoItem:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.infoItem strong {
+  color: #1a6b4f;
+  font-size: 0.9em;
+  margin-bottom: 5px;
+}
+
+.infoItem span {
+  color: #333;
+  font-size: 1.1em;
+}
+
+.projectsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.projectBadge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.noProjects {
+  color: #999;
+  font-style: italic;
+  font-size: 0.95em;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.buttonGroup button {
+  flex: 1;
+}
+
+.signOutButton {
+  background: #dc3545 !important;
+}
+
+.signOutButton:hover {
+  background: #c82333 !important;
+}
+
+.error {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #c33;
+  font-size: 0.95em;
+}
 .container {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fdf9 0%, #f0f7f2 100%);
