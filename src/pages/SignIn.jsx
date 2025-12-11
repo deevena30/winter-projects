@@ -303,7 +303,7 @@ export default function SignIn() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="At least 6 characters"
+              placeholder=" "
               className={styles.input}
               disabled={loading}
               autoComplete="current-password"
