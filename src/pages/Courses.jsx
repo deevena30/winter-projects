@@ -121,7 +121,7 @@ setUserData(updatedUserData);
   const handleRegister = async (projectId, projectTitle) => {
     // Show confirmation dialog with warning
     const confirmRegistration = window.confirm(
-      `Are you sure you want to register for "${projectTitle}"?\n\n⚠️ IMPORTANT: You cannot unregister after registering. Please choose carefully.`
+      `Are you sure you want to register for "${projectTitle}"?`
     );
     
     if (!confirmRegistration) {
