@@ -62,9 +62,6 @@ export default function Courses() {
       const localUserData = JSON.parse(userDataStr);
       setUserData(localUserData);
       
-      console.log("📋 Current localStorage data:", localUserData);
-      console.log("📊 Current registeredProjects state:", Array.from(registeredProjects));
-      
       // Sync with server in background
       try {
         const response = await axios.get(
@@ -95,7 +92,6 @@ export default function Courses() {
             }
             
             if (needsUpdate) {
-              console.log("🔄 Updating from server data:", serverProjectIds);
               setRegisteredProjects(serverSet);
               
               // Update localStorage
@@ -117,6 +113,15 @@ export default function Courses() {
   };
 
   const handleRegister = async (projectId, projectTitle) => {
+    // Show confirmation dialog with warning
+    const confirmRegistration = window.confirm(
+      `Are you sure you want to register for "${projectTitle}"?\n\n⚠️ IMPORTANT: You cannot unregister after registering. Please choose carefully.`
+    );
+    
+    if (!confirmRegistration) {
+      return;
+    }
+
     const userDataStr = localStorage.getItem('user');
     
     if (!userDataStr) {
@@ -167,7 +172,7 @@ export default function Courses() {
           setShowSuccess(false);
         }, 3000);
         
-        console.log(`✅ Registered for: ${projectTitle}, IDs: ${updatedProjectIds}`);
+        console.log(`✅ Registered for: ${projectTitle}`);
       } else {
         alert(response.data.message || 'Registration failed');
       }
@@ -262,8 +267,6 @@ export default function Courses() {
             const isRegistered = registeredProjects.has(p.id);
             const isLoading = loadingProjectId === p.id;
             
-            console.log(`Project ${p.id} (${p.title}): isRegistered = ${isRegistered}`); // Debug
-            
             return (
               <div 
                 key={p.id}
@@ -290,7 +293,7 @@ export default function Courses() {
                   </button>
                   
                   {isRegistered ? (
-                    <button className={styles.registeredBtn} disabled>
+                    <button className={styles.registeredBtn} disabled title="You cannot unregister after registering">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                         <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M22 4L12 14.01L9 11.01" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -305,6 +308,7 @@ export default function Courses() {
                         handleRegister(p.id, p.title);
                       }}
                       disabled={isLoading}
+                      title="Note: You cannot unregister after registering. Please choose carefully."
                     >
                       {isLoading ? 'Processing...' : 'Register Now'}
                     </button>
@@ -315,6 +319,7 @@ export default function Courses() {
           })}
         </div>
       </div>
+
       {/* Modal */}
       {opened && (
         <div className={styles.modalOverlay} onClick={() => setOpened(null)}>
@@ -323,7 +328,9 @@ export default function Courses() {
               <div>
                 <div className={styles.modalTags}>
                   <span className={styles.modalCategory}>{opened.category}</span>
-                  <span className={`${styles.modalDifficulty} ${styles[opened.difficulty.toLowerCase()]}`}></span>
+                  <span className={`${styles.modalDifficulty} ${styles[opened.difficulty.toLowerCase()]}`}>
+                    {opened.difficulty}
+                  </span>
                 </div>
                 <h2 className={styles.modalTitle}>{opened.title}</h2>
               </div>
@@ -414,13 +421,13 @@ export default function Courses() {
                 </div>
               )}
               
-              {/* Special Note */}
-              {opened.specialNote && (
-                <div className={styles.specialNote}>
-                  <h4 className={styles.specialNoteTitle}>Special Note</h4>
-                  <p className={styles.specialNoteText}>{opened.specialNote}</p>
-                </div>
-              )}
+              {/* Warning Note */}
+              <div className={styles.specialNote}>
+                <h4 className={styles.specialNoteTitle}>Important Notice</h4>
+                <p className={styles.specialNoteText}>
+                  ⚠️ You cannot unregister for a project after registering. Please choose your projects carefully.
+                </p>
+              </div>
             </div>
             
             <div className={styles.modalFooter}>
@@ -436,8 +443,14 @@ export default function Courses() {
                 <button 
                   className={styles.modalRegisterBtn}
                   onClick={() => {
-                    handleRegister(opened.id, opened.title);
-                    setOpened(null);
+                    const confirmRegistration = window.confirm(
+                      `Are you sure you want to register for "${opened.title}"?\n\n⚠️ IMPORTANT: You cannot unregister after registering. Please choose carefully.`
+                    );
+                    
+                    if (confirmRegistration) {
+                      handleRegister(opened.id, opened.title);
+                      setOpened(null);
+                    }
                   }}
                   disabled={loadingProjectId === opened.id}
                 >
