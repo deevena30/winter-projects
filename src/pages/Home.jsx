@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "./styles/Home.module.css";
+import minal from "../assets/Minal_Bhojasia.jpg";
+import venna from "../assets/Venna_Karthik_reddy.jpg";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -29,6 +31,18 @@ export default function Home() {
     { date: "December 15, 2025", event: "Project Starts" },
     { date: "January 5, 2026", event: "Submission Deadline" },
     { date: "January, 2026", event: "Grand Finale for Selected Projects" },
+  ];
+    // Testimonials data
+  const testimonials = [
+    {
+      name: "Minal Bhojasia",
+      text: "I began the winter project, organised by the Sustainability Cell, with little understanding of ESG frameworks or sustainability reporting. Over the course of the project, I explored various rating systems such as DJSI, MSCI, and Sustainalytics, and then applied these concepts by drafting an ESG policy for a hypothetical chips manufacturing company. By the end, I had gained valuable insight into corporate sustainability strategies.",
+    image: minal
+  },
+    {
+      name: "Venna Kartik Reddy",
+      text: "The Winter Project on Green Investing by Sustainability Cell was a wonderful experience for me. As someone who was intrigued by the idea of intersection of finance and climate but didn't know how to start, the project had the perfect balance of theoretical research and practical thinking. What also enriched the experience was the swift response of the conveners related to both technical and non technical doubts. I was able to not just explore the domain in depth but was also able to secure 3rd place in the final presentation of the winter projects.",
+    image : venna}
   ];
 
   return (
@@ -214,7 +228,37 @@ export default function Home() {
             </div>
           </div>
         </section> */}
+        {/* Past Testimonials Section */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Past Testimonials</h2>
+          
+          <div className={styles.testimonialsContainer}>
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className={styles.testimonialCard}>
+                <div className={styles.testimonialImage}>
+                  <div className={styles.personImage}>
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.name}
+                      className={styles.testimonialPersonImage}
+                    />
+                  </div>
+                </div>
+                <div className={styles.testimonialContent}>
+                  <h3 className={styles.testimonialName}>{testimonial.name}</h3>
+                  <p className={styles.testimonialText}>{testimonial.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
+          {/* View Projects Button */}
+          <div className={styles.testimonialsCTA}>
+            <button onClick={handleGetStarted} className={styles.ctaButton}>
+              View Projects
+            </button>
+          </div>
+        </section>
         {/* CTA Section */}
         {/* <div className={styles.ctaSection}>
           <h2>Ready to Develop Professional Sustainability Skills?</h2>
