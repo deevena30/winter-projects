@@ -65,7 +65,7 @@ export default function SignIn() {
 
   const validateIITBEmail = (email) => {
     if (!email) return false;
-    const domains = ['@iitb.ac.in', '@iitbhu.ac.in', '@itbhu.ac.in'];
+    const domains = ['@iitb.ac.in'];
     return domains.some(domain => email.toLowerCase().endsWith(domain));
   };
 
@@ -92,7 +92,7 @@ export default function SignIn() {
 
     // Validate email if provided
     if (email.trim() && !validateIITBEmail(email)) {
-      setError("Please use a valid IITB/IITBHU email address");
+      setError("Please use a valid IITB email");
       return;
     }
 
@@ -297,14 +297,14 @@ export default function SignIn() {
         
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label htmlFor="email">IITB/IITBHU Email <span className={styles.optional}>(optional)</span></label>
+            <label htmlFor="email">IITB Email<span className={styles.required}>*</span></label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="example@iitb.ac.in or example@iitbhu.ac.in"
+              placeholder="example@iitb.ac.in"
               className={styles.input}
               disabled={loading}
               autoComplete="email"
@@ -312,7 +312,7 @@ export default function SignIn() {
           </div>
           
           <div className={styles.inputGroup}>
-            <label htmlFor="rollNumber">Roll Number <span className={styles.optional}>(optional)</span></label>
+            <label htmlFor="rollNumber">Roll Number<span className={styles.required}>*</span></label>
             <input
               type="text"
               id="rollNumber"
@@ -327,7 +327,7 @@ export default function SignIn() {
           </div>
           
           <div className={styles.inputGroup}>
-            <label htmlFor="phone">Phone Number <span className={styles.required}>*</span></label>
+            <label htmlFor="phone">Phone Number<span className={styles.required}>*</span></label>
             <input
               type="tel"
               id="phone"
@@ -340,7 +340,6 @@ export default function SignIn() {
               required
               autoComplete="tel"
             />
-            <small className={styles.helperText}>At least one of email or roll number is required</small>
           </div>
           
           <div className={styles.inputGroup}>
@@ -358,10 +357,6 @@ export default function SignIn() {
               autoComplete="current-password"
             />
             <small className={styles.helperText}>Minimum 6 characters</small>
-          </div>
-          
-          <div className={styles.infoBox}>
-            <p>ℹ️ Please provide at least one of: Email or Roll Number</p>
           </div>
           
           <button 
