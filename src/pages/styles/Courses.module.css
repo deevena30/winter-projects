@@ -6,14 +6,14 @@
   padding: 0 0 80px 0;
 }
 
-/* Hero Section */
+/* Hero Section - SINGLE DEFINITION */
 .heroSection {
   background: linear-gradient(135deg, #0a3d2c 0%, #1a6b4f 100%);
-  padding: 80px 20px 60px;
+  padding: 60px 20px 45px; /* Reduced padding */
   text-align: center;
   position: relative;
   overflow: hidden;
-  margin-bottom: 40px;
+  margin-bottom: 20px; /* Reduced margin */
 }
 
 .heroSection::before {
@@ -43,12 +43,12 @@
   text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
-/* User Banner */
+/* User Banner - Updated with better spacing */
 .userBanner {
   background: linear-gradient(135deg, #1a6b4f 0%, #2d8a63 100%);
   padding: 16px 24px;
   border-radius: 12px;
-  margin: 0 20px 30px;
+  margin: 20px 20px 30px; /* Adjusted margins */
   box-shadow: 0 4px 12px rgba(26, 107, 79, 0.2);
   max-width: 1200px;
   margin-left: auto;
@@ -58,33 +58,47 @@
 .userInfo {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px; /* Slightly reduced gap */
   color: white;
   font-size: 0.95rem;
   flex-wrap: wrap;
+  justify-content: space-between; /* Better distribution */
 }
 
 .userLabel {
   font-weight: 500;
   opacity: 0.9;
+  white-space: nowrap;
+  padding: 4px 0;
 }
 
 .userName {
   font-weight: 700;
   background: rgba(255, 255, 255, 0.2);
-  padding: 6px 14px;
+  padding: 6px 16px; /* Slightly increased padding */
   border-radius: 8px;
   backdrop-filter: blur(10px);
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  margin: 0 4px;
 }
 
 .projectCount {
-  margin-left: auto;
   background: rgba(255, 255, 255, 0.25);
-  padding: 6px 14px;
+  padding: 6px 16px; /* Slightly increased padding */
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.9rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+
+/* REMOVE THIS DUPLICATE HERO SECTION RULE */
+/* .heroSection { ... } */ /* This was duplicate */
 
 /* Success Message */
 .successMessage {
@@ -724,11 +738,19 @@
     padding: 28px;
     min-height: 400px;
   }
+  
+  .heroSection {
+    padding: 50px 20px 35px;
+  }
+  
+  .heading {
+    font-size: 2.8rem;
+  }
 }
 
 @media (max-width: 768px) {
   .heroSection {
-    padding: 60px 20px 45px;
+    padding: 40px 20px 30px;
   }
   
   .heading {
@@ -741,13 +763,28 @@
   }
   
   .userInfo {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: row; /* Keep as row for better layout */
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  
+  .userLabel {
+    font-size: 0.9rem;
+    padding: 2px 0;
+  }
+  
+  .userName {
+    padding: 5px 12px;
+    font-size: 0.9rem;
+    margin: 0 2px;
+    flex-grow: 1;
+    min-width: 150px; /* Ensure minimum width */
   }
   
   .projectCount {
-    margin-left: 0;
+    padding: 5px 12px;
+    font-size: 0.85rem;
   }
   
   .grid {
@@ -789,11 +826,30 @@
 
 @media (max-width: 480px) {
   .heroSection {
-    padding: 50px 15px 35px;
+    padding: 30px 15px 25px;
   }
   
   .heading {
     font-size: 2rem;
+  }
+  
+  .userInfo {
+    flex-direction: column; /* Stack vertically on very small screens */
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .userLabel {
+    text-align: center;
+  }
+  
+  .userName {
+    margin: 4px 0;
+    text-align: center;
+  }
+  
+  .projectCount {
+    text-align: center;
   }
   
   .gridContainer {
