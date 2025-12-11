@@ -241,8 +241,22 @@ export default function SignIn() {
     <div className={styles.container}>
       <div className={styles.signInBox}>
         <h2 className={styles.title}>
-          {formData.projectId ? `Register for: ${formData.projectTitle}` : 'Sign In'}
+          {formData.projectId ? `Register for Project` : 'Sign In to Winter Projects'}
         </h2>
+        
+        {formData.projectId && formData.projectTitle && (
+          <div style={{
+            background: '#e3f2fd',
+            padding: '12px 16px',
+            borderRadius: '10px',
+            marginBottom: '20px',
+            textAlign: 'center',
+            color: '#1565c0',
+            fontWeight: '600'
+          }}>
+            📚 {formData.projectTitle}
+          </div>
+        )}
         
         {error && (
           <div className={styles.error}>

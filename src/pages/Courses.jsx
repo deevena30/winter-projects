@@ -14,7 +14,7 @@ export default function Courses() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [registeredProjectTitle, setRegisteredProjectTitle] = useState("");
   const [userData, setUserData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProjectId, setLoadingProjectId] = useState(null); // Track which specific button is loading
 
   // Load user data and registered projects on mount
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function Courses() {
       return;
     }
 
-    setIsLoading(true);
+    setLoadingProjectId(projectId); // Set loading for this specific button
 
     try {
       const currentUserData = JSON.parse(userDataStr);
@@ -147,7 +147,7 @@ export default function Courses() {
         alert("Registration failed. Please try again.");
       }
     } finally {
-      setIsLoading(false);
+      setLoadingProjectId(null); // Clear loading state
     }
   };
 
@@ -197,27 +197,14 @@ export default function Courses() {
 
       <div className={styles.heroSection}>
         <h1 className={styles.heading}>Winter Project Tracks</h1>
-        {/* <p className={styles.subtitle}>Master sustainability skills through hands-on projects</p> */}
       </div>
-
-      {/* Filter Tabs */}
-      {/* <div className={styles.filterContainer}>
-        {categories.map(category => (
-          <button
-            key={category}
-            className={`${styles.filterButton} ${activeFilter === category ? styles.activeFilter : ''}`}
-            onClick={() => setActiveFilter(category)}
-          >
-            {category === "all" ? "All Projects" : category}
-          </button>
-        ))}
-      </div> */}
 
       {/* Projects Grid */}
       <div className={styles.gridContainer}>
         <div className={styles.grid}>
           {filteredProjects.map((p) => {
             const isRegistered = registeredProjects.has(p.id);
+            const isLoading = loadingProjectId === p.id;
             
             return (
               <div 
@@ -305,7 +292,7 @@ export default function Courses() {
                 </div>
               )}
               
-              {/* Key Points/Features */}
+              {/* Key Points */}
               {opened.keypoints && opened.keypoints.length > 0 && (
                 <div className={styles.modalSection}>
                   <h3 className={styles.modalSectionTitle}>Key Learning Areas</h3>
@@ -397,9 +384,9 @@ export default function Courses() {
                     handleRegister(opened.id, opened.title);
                     setOpened(null);
                   }}
-                  disabled={isLoading}
+                  disabled={loadingProjectId === opened.id}
                 >
-                  {isLoading ? 'Processing...' : 'Register for this Project'}
+                  {loadingProjectId === opened.id ? 'Processing...' : 'Register for this Project'}
                 </button>
               )}
             </div>
