@@ -437,14 +437,6 @@ setUserData(updatedUserData);
                   </div>
                 </div>
               )}
-              
-              {/* Warning Note */}
-              <div className={styles.specialNote}>
-                <h4 className={styles.specialNoteTitle}>Important Notice</h4>
-                <p className={styles.specialNoteText}>
-                  ⚠️ You cannot unregister for a project after registering. Please choose your projects carefully.
-                </p>
-              </div>
             </div>
             
             <div className={styles.modalFooter}>
@@ -461,9 +453,8 @@ setUserData(updatedUserData);
                   className={styles.modalRegisterBtn}
                   onClick={() => {
                     const confirmRegistration = window.confirm(
-                      `Are you sure you want to register for "${opened.title}"?\n\n⚠️ IMPORTANT: You cannot unregister after registering. Please choose carefully.`
+                      `Are you sure you want to register for "${opened.title}"?`
                     );
-                    
                     if (confirmRegistration) {
                       handleRegister(opened.id, opened.title);
                       setOpened(null);

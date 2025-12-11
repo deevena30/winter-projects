@@ -15,9 +15,8 @@ export const projects = [
       "Challenges & Trends: Study greenwashing risks and AI/Blockchain solutions"
     ],
     prerequisites: [
-      "Basic understanding of finance and investment concepts",
-      "Interest in sustainable finance and ESG principles",
-      "Basic Excel skills recommended"
+      "Interest in finance and sustainability convergence",
+      "Openness to learning investment evaluation frameworks"
     ],
     deliverables: [
       "Design a sustainable multi-asset fund",
@@ -44,9 +43,8 @@ export const projects = [
       "Development of LCA-linked KPIs and implementation roadmap"
     ],
     prerequisites: [
-      "Basic understanding of supply chain concepts",
-      "Interest in sustainability and circular economy",
-      "Analytical thinking skills"
+      "Curiosity about how everyday products impact the environment",
+      "Interest in problem-solving and systems thinking"
     ],
     deliverables: [
       "Complete supply chain map for selected product",
@@ -74,9 +72,9 @@ export const projects = [
       "Science-Based Target (SBT) development and justification"
     ],
     prerequisites: [
-      "Intermediate Excel skills required",
-      "Basic understanding of corporate sustainability",
-      "Analytical mindset"
+      "Enthusiastic to learn",
+      "Comfort with analytical thinking",
+      "Willingness to engage with technical concepts"
     ],
     deliverables: [
       "Excel-based GHG Accounting Model (Scope 1, 2, 3)",
@@ -104,9 +102,7 @@ export const projects = [
       "Practical ESG policy development"
     ],
     prerequisites: [
-      "Interest in corporate sustainability",
-      "Basic business knowledge",
-      "Good communication skills"
+      "None - open to all enthusiastic learners!"
     ],
     deliverables: [
       "Comprehensive ESG policy report",
