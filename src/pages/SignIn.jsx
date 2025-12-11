@@ -71,7 +71,7 @@ const validateIITBEmail = (email) => {
 };
 
 
-const validateRollnumber = (input) => {
+const validateRollNumber = (input) => {
     if (!input) return false;
 
     input = input.trim();
