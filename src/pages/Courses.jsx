@@ -10,51 +10,26 @@ export default function Courses() {
   const navigate = useNavigate();
   const [opened, setOpened] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
-  
-  // Initialize registeredProjects from localStorage immediately
-  const [registeredProjects, setRegisteredProjects] = useState(() => {
-    // This function runs only once when the component first mounts
-    try {
-      const userDataStr = localStorage.getItem('user');
-      if (userDataStr) {
-        const userData = JSON.parse(userDataStr);
-        console.log("🔄 Initializing state from localStorage:", userData);
-        
-        // Check for projectIds first
-        if (userData.projectIds && Array.isArray(userData.projectIds)) {
-          return new Set(userData.projectIds);
-        }
-        // Check for registeredProjects (legacy format)
-        else if (userData.registeredProjects && Array.isArray(userData.registeredProjects)) {
-          const ids = userData.registeredProjects.map(p => {
-            if (typeof p === 'string') return p;
-            if (p && typeof p === 'object') return p.projectId || p.id;
-            return '';
-          }).filter(Boolean);
-          return new Set(ids);
-        }
-      }
-    } catch (error) {
-      console.error("Error initializing from localStorage:", error);
-    }
-    return new Set(); // Default empty set
-  });
-  
+  const [registeredProjects, setRegisteredProjects] = useState(new Set());
   const [showSuccess, setShowSuccess] = useState(false);
   const [registeredProjectTitle, setRegisteredProjectTitle] = useState("");
   const [userData, setUserData] = useState(null);
   const [loadingProjectId, setLoadingProjectId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  // Load user data and sync with server
+  // Load user data and registered projects on mount
   useEffect(() => {
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
+    setIsLoading(true);
     const userDataStr = localStorage.getItem('user');
     
     if (!userDataStr) {
+      // No user data, redirect to signin
       navigate('/signin');
+      setIsLoading(false);
       return;
     }
 
@@ -62,57 +37,58 @@ export default function Courses() {
       const localUserData = JSON.parse(userDataStr);
       setUserData(localUserData);
       
-      console.log("📋 Current localStorage data:", localUserData);
-      console.log("📊 Current registeredProjects state:", Array.from(registeredProjects));
+      // FIRST: Always load from localStorage immediately
+      let projectIds = [];
       
-      // Sync with server in background
+      if (localUserData.projectIds && localUserData.projectIds.length > 0) {
+        // Use projectIds array if available
+        projectIds = localUserData.projectIds;
+      } else if (localUserData.registeredProjects && localUserData.registeredProjects.length > 0) {
+        // Fallback to registeredProjects array (legacy format)
+        projectIds = localUserData.registeredProjects.map(p => p.projectId || p.id);
+      }
+      
+      // Set registered projects from localStorage immediately
+      setRegisteredProjects(new Set(projectIds));
+      
+      // SECOND: Try to sync with server in background
       try {
         const response = await axios.get(
           `${API_URL}/user/${encodeURIComponent(localUserData.identifier)}`,
-          { timeout: 5000 }
+          { timeout: 5000 } // Add timeout to prevent hanging
         );
         
         if (response.data.success && response.data.data) {
           const serverData = response.data.data;
           const serverProjectIds = serverData.projectIds || [];
           
-          // If server has different data, update both state and localStorage
+          // Update local state with server data
+          const updatedUserData = {
+            ...localUserData,
+            projectIds: serverProjectIds,
+            phone: serverData.phone || localUserData.phone,
+            registeredAt: serverData.registeredAt || localUserData.registeredAt
+          };
+          
+          setUserData(updatedUserData);
+          localStorage.setItem('user', JSON.stringify(updatedUserData));
+          
+          // Update registered projects set if server has different data
           if (serverProjectIds.length > 0) {
-            const serverSet = new Set(serverProjectIds);
-            const currentSet = registeredProjects;
-            
-            // Check if we need to update
-            let needsUpdate = false;
-            if (serverSet.size !== currentSet.size) {
-              needsUpdate = true;
-            } else {
-              for (const id of serverSet) {
-                if (!currentSet.has(id)) {
-                  needsUpdate = true;
-                  break;
-                }
-              }
-            }
-            
-            if (needsUpdate) {
-              console.log("🔄 Updating from server data:", serverProjectIds);
-              setRegisteredProjects(serverSet);
-              
-              // Update localStorage
-              const updatedUserData = {
-                ...localUserData,
-                projectIds: serverProjectIds
-              };
-              localStorage.setItem('user', JSON.stringify(updatedUserData));
-              setUserData(updatedUserData);
-            }
+            setRegisteredProjects(new Set(serverProjectIds));
           }
         }
       } catch (err) {
-        console.log('Server sync failed:', err.message);
+        console.log('Server sync failed, using local data:', err.message);
+        // We already have local data loaded, so continue
       }
     } catch (error) {
       console.error("Error loading user data:", error);
+      // Clear corrupted data and redirect to signin
+      localStorage.removeItem('user');
+      navigate('/signin');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -144,18 +120,15 @@ export default function Courses() {
       });
 
       if (response.data.success) {
-        // Update state
-        const updatedSet = new Set(registeredProjects);
-        updatedSet.add(projectId);
-        setRegisteredProjects(updatedSet);
+        // Update local state
+        const updatedProjectIds = [...registeredProjects, projectId];
+        setRegisteredProjects(new Set(updatedProjectIds));
         
-        // Update localStorage
-        const updatedProjectIds = Array.from(updatedSet);
+        // Update localStorage - ensure projectIds array exists
         const updatedUserData = {
           ...currentUserData,
           projectIds: updatedProjectIds
         };
-        
         localStorage.setItem('user', JSON.stringify(updatedUserData));
         setUserData(updatedUserData);
         
@@ -167,26 +140,24 @@ export default function Courses() {
           setShowSuccess(false);
         }, 3000);
         
-        console.log(`✅ Registered for: ${projectTitle}, IDs: ${updatedProjectIds}`);
+        console.log(`✅ Successfully registered for: ${projectTitle}`);
       } else {
         alert(response.data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error("Error registering:", error);
+      console.error("Error registering for project:", error);
       
-      // Fallback: Save locally
+      // Fallback: Save locally if backend fails
       try {
         const currentUserData = JSON.parse(userDataStr);
-        const updatedSet = new Set(registeredProjects);
-        updatedSet.add(projectId);
-        setRegisteredProjects(updatedSet);
+        const updatedProjectIds = [...registeredProjects, projectId];
         
-        const updatedProjectIds = Array.from(updatedSet);
+        setRegisteredProjects(new Set(updatedProjectIds));
+        
         const updatedUserData = {
           ...currentUserData,
           projectIds: updatedProjectIds
         };
-        
         localStorage.setItem('user', JSON.stringify(updatedUserData));
         setUserData(updatedUserData);
         
@@ -197,10 +168,10 @@ export default function Courses() {
           setShowSuccess(false);
         }, 3000);
         
-        console.log('⚠️ Registered locally');
+        console.log('⚠️ Registered locally (backend unavailable)');
       } catch (fallbackError) {
-        console.error("Fallback failed:", fallbackError);
-        alert("Registration failed.");
+        console.error("Fallback registration failed:", fallbackError);
+        alert("Registration failed. Please try again.");
       }
     } finally {
       setLoadingProjectId(null);
@@ -211,6 +182,24 @@ export default function Courses() {
   const filteredProjects = activeFilter === "all" 
     ? projects 
     : projects.filter(p => p.category === activeFilter);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className={styles.wrapper}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontSize: '1.2rem',
+          color: '#0a3d2c'
+        }}>
+          Loading your projects...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -261,8 +250,6 @@ export default function Courses() {
           {filteredProjects.map((p) => {
             const isRegistered = registeredProjects.has(p.id);
             const isLoading = loadingProjectId === p.id;
-            
-            console.log(`Project ${p.id} (${p.title}): isRegistered = ${isRegistered}`); // Debug
             
             return (
               <div 
@@ -336,7 +323,7 @@ export default function Courses() {
             </div>
             
             <div className={styles.modalBody}>
-              {/* Modal body content - same as before */}
+              {/* ... modal body content ... */}
             </div>
             
             <div className={styles.modalFooter}>
