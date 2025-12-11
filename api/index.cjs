@@ -32,7 +32,6 @@ async function initializeDatabase() {
         roll_number VARCHAR(50),
         phone VARCHAR(15) NOT NULL,
         project_ids TEXT[],
-        password_hash VARCHAR(255),
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         ip VARCHAR(100),
         user_agent TEXT,
@@ -91,6 +90,24 @@ async function runMigrations() {
       console.log('✅ Roll_number column already exists');
     }
     
+    // Remove password_hash column if it exists (optional)
+    try {
+      const checkPassword = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'registrations' 
+        AND column_name = 'password_hash'
+      `);
+      
+      if (checkPassword.rows.length > 0) {
+        console.log('🗑️ Removing password_hash column...');
+        await pool.query('ALTER TABLE registrations DROP COLUMN password_hash');
+        console.log('✅ Removed password_hash column');
+      }
+    } catch (passwordError) {
+      console.log('⚠️ Could not remove password_hash column:', passwordError.message);
+    }
+    
     console.log('✅ Database migrations completed');
     
   } catch (error) {
@@ -145,7 +162,7 @@ app.get('/', (req, res) => {
 // 🎯 1. REGISTER/UPDATE USER
 app.post('/api/register', async (req, res) => {
   try {
-    const { identifier, email, rollNumber, phone, projectId, password } = req.body;
+    const { identifier, email, rollNumber, phone, projectId } = req.body;
     
     console.log('📝 Registration:', { identifier, email, rollNumber, phone, projectId });
     
@@ -169,11 +186,10 @@ app.post('/api/register', async (req, res) => {
     }
     
     // Validate IITB email if provided
-    if (normalizedEmail && !normalizedEmail.endsWith('@iitb.ac.in') && 
-        !normalizedEmail.endsWith('@iitbhu.ac.in') && !normalizedEmail.endsWith('@itbhu.ac.in')) {
+    if (normalizedEmail && !normalizedEmail.endsWith('@iitb.ac.in')) {
       return res.status(400).json({
         success: false,
-        message: 'Please use IITB/IITBHU email address'
+        message: 'Please use IITB email address (@iitb.ac.in)'
       });
     }
     
@@ -218,15 +234,14 @@ app.post('/api/register', async (req, res) => {
     const projectIds = projectId ? [projectId] : [];
     
     await pool.query(
-      `INSERT INTO registrations (identifier, email, roll_number, phone, project_ids, password_hash, ip, user_agent) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO registrations (identifier, email, roll_number, phone, project_ids, ip, user_agent) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         normalizedIdentifier,
         normalizedEmail,
         normalizedRollNumber,
         phone.trim(),
         projectIds,
-        password || null,
         req.ip || req.headers['x-forwarded-for'] || 'unknown',
         req.headers['user-agent'] || 'unknown'
       ]

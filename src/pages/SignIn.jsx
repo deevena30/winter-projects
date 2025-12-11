@@ -13,7 +13,6 @@ export default function SignIn() {
     email: "",
     rollNumber: "",
     phone: "",
-    password: "",
     projectId: null,
     projectTitle: null
   });
@@ -76,16 +75,15 @@ export default function SignIn() {
   };
 
   const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
-  const validatePassword = (password) => password.length >= 6;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    const { email, rollNumber, phone, password, projectId } = formData;
+    const { email, rollNumber, phone, projectId } = formData;
 
     // Check if at least one identifier is provided
-    if ((!email.trim() && !rollNumber.trim()) || !phone.trim() || !password.trim()) {
+    if ((!email.trim() && !rollNumber.trim()) || !phone.trim()) {
       setError("Please fill all required fields");
       return;
     }
@@ -107,11 +105,6 @@ export default function SignIn() {
       return;
     }
 
-    if (!validatePassword(password)) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -125,7 +118,6 @@ export default function SignIn() {
         rollNumber: rollNumber.trim() || null,
         phone,
         projectId,
-        password,
         timestamp: new Date().toISOString()
       });
 
@@ -181,7 +173,6 @@ export default function SignIn() {
       email: "",
       rollNumber: "",
       phone: "",
-      password: "",
       projectId: null,
       projectTitle: null
     });
@@ -242,13 +233,6 @@ export default function SignIn() {
                 )}
               </div>
             </div>
-            
-            {userData.registeredAt && (
-              <div className={styles.infoItem}>
-                <strong>Member Since:</strong>
-                <span>{new Date(userData.registeredAt).toLocaleDateString()}</span>
-              </div>
-            )}
           </div>
           
           <div className={styles.buttonGroup}>
@@ -284,8 +268,7 @@ export default function SignIn() {
         </h2>
         
         {formData.projectId && formData.projectTitle && (
-          <div className={styles.projectNotice}>
-            <span>📚</span> {formData.projectTitle}
+          <div className={styles.projectNotice}> {formData.projectTitle}
           </div>
         )}
         
@@ -304,7 +287,7 @@ export default function SignIn() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="example@iitb.ac.in"
+              placeholder=" "
               className={styles.input}
               disabled={loading}
               autoComplete="email"
@@ -319,7 +302,7 @@ export default function SignIn() {
               name="rollNumber"
               value={formData.rollNumber}
               onChange={handleChange}
-              placeholder="22B1234 or 23ME10001"
+              placeholder=" "
               className={styles.input}
               disabled={loading}
               autoComplete="off"
@@ -342,23 +325,6 @@ export default function SignIn() {
             />
           </div>
           
-          <div className={styles.inputGroup}>
-            <label htmlFor="password">Password <span className={styles.required}>*</span></label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              className={styles.input}
-              disabled={loading}
-              required
-              autoComplete="current-password"
-            />
-            <small className={styles.helperText}>Minimum 6 characters</small>
-          </div>
-          
           <button 
             type="submit" 
             className={styles.submitButton}
@@ -369,7 +335,6 @@ export default function SignIn() {
         </form>
         
         <div className={styles.footer}>
-          <p>Don't have an account? Sign up above!</p>
           <Link to="/" className={styles.link}>← Back to Home</Link>
         </div>
       </div>
