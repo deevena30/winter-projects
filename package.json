@@ -4,6 +4,7 @@
   "description": "Backend for Winter Projects Registration",
   "main": "api/index.cjs",
   "scripts": {
+    "build": "vite build" ,
     "start": "node api/index.cjs",
     "dev": "nodemon api/index.cjs"
   },
