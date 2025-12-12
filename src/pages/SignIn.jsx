@@ -77,7 +77,7 @@ const validateRollNumber = (input) => {
     input = input.trim();
 
     // Roll number: 2 digits + 1 letter + 3–5 digits (e.g., 22B1234, 23ME10001)
-    const rollRegex = /^\d{2}[A-Z]\d{3,5}$/i;
+    const rollRegex = /^[6-9]\d{9}$/;
 
     // Phone number: 10 digits (Indian format)
     const phoneRegex = /^[6-9]\d{9}$/;
