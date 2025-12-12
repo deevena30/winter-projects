@@ -72,17 +72,7 @@ const validateIITBEmail = (email) => {
 
 
 const validateRollNumber = (input) => {
-    if (!input) return false;
-
-    input = input.trim();
-
-    // Roll number: 2 digits + 1 letter + 3–5 digits (e.g., 22B1234, 23ME10001)
-    const rollRegex = /^[6-9]\d{9}$/;
-
-    // Phone number: 10 digits (Indian format)
-    const phoneRegex = /^[6-9]\d{9}$/;
-
-    return rollRegex.test(input) || phoneRegex.test(input);
+    return true;
 };
 
 
