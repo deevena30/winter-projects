@@ -10,7 +10,7 @@ export default function Header() {
         <Link to="/">Home</Link>
         <Link to="/courses">Projects</Link>
         <Link to="/contact">Contact</Link>
-        <Link to="/signin" className={styles.signin}>Sign In</Link>
+        <Link to="/signin" className={styles.signin}>SignIn</Link>
       </nav>
     </header>
   );
